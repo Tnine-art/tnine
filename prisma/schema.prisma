@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum AccountType {
+  USER_WALLET
+  GATEWAY_CLEARING
+  VTU_CLEARING
+  REVENUE
+}
+
+enum TransactionType {
+  WALLET_FUNDING
+  AIRTIME
+  DATA
+  REFUND
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+  REVERSED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SUCCESSFUL
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id              String         @id @default(cuid())
+  name            String
+  email           String         @unique
+  passwordHash    String
+  role            UserRole       @default(CUSTOMER)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  sessions        Session[]
+  account         LedgerAccount?
+  payments        Payment[]
+  orders          ServiceOrder[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model LedgerAccount {
+  id          String          @id @default(cuid())
+  type        AccountType
+  name        String
+  userId      String?         @unique
+  balanceKobo Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postings    LedgerPosting[]
+
+  @@index([type])
+}
+
+model LedgerTransaction {
+  id          String            @id @default(cuid())
+  reference   String            @unique
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  description String
+  metadata    String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  postings    LedgerPosting[]
+  payment     Payment?
+  order       ServiceOrder?
+}
+
+model LedgerPosting {
+  id            String            @id @default(cuid())
+  transactionId String
+  accountId     String
+  amountKobo    Int
+  createdAt     DateTime          @default(now())
+  transaction   LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  account       LedgerAccount     @relation(fields: [accountId], references: [id])
+
+  @@index([transactionId])
+  @@index([accountId, createdAt])
+}
+
+model Payment {
+  id                  String             @id @default(cuid())
+  reference           String             @unique
+  userId              String
+  amountKobo          Int
+  provider            String
+  providerRef         String?
+  status              PaymentStatus      @default(PENDING)
+  ledgerTransactionId String?            @unique
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  user                User               @relation(fields: [userId], references: [id])
+  ledgerTransaction   LedgerTransaction? @relation(fields: [ledgerTransactionId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model ServiceOrder {
+  id                  String             @id @default(cuid())
+  reference           String             @unique
+  userId              String
+  kind                TransactionType
+  network             String
+  phone               String
+  planCode            String?
+  description         String
+  amountKobo          Int
+  provider            String
+  providerRef         String?
+  status              OrderStatus        @default(PENDING)
+  ledgerTransactionId String?            @unique
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  user                User               @relation(fields: [userId], references: [id])
+  ledgerTransaction   LedgerTransaction? @relation(fields: [ledgerTransactionId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model IdempotencyKey {
+  id           String   @id @default(cuid())
+  key          String
+  userId       String
+  route        String
+  responseCode Int
+  responseBody String
+  createdAt    DateTime @default(now())
+
+  @@unique([key, userId, route])
+  @@index([createdAt])
+}

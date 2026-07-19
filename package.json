@@ -1,0 +1,30 @@
+{
+  "name": "paypoint",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PayPoint airtime and data platform",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.0",
+    "dotenv": "16.6.1",
+    "express": "5.1.0",
+    "express-rate-limit": "8.1.0",
+    "helmet": "8.1.0",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "prisma": "6.19.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
