@@ -7,22 +7,24 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "worker": "node src/worker.js",
     "test": "node --test",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:create": "node scripts/create-admin.js"
   },
   "dependencies": {
-    "@prisma/client": "6.19.0",
+    "@prisma/client": "6.19.3",
     "dotenv": "16.6.1",
     "express": "5.1.0",
-    "express-rate-limit": "8.1.0",
+    "express-rate-limit": "8.6.0",
     "helmet": "8.1.0",
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "prisma": "6.19.0"
+    "prisma": "6.19.3"
   },
   "engines": {
     "node": ">=22"

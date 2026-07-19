@@ -26,7 +26,7 @@ router.post('/initialize', authenticate, asyncRoute(async (req, res) => {
   const reference = idempotentReference(req, 'pay');
   const existing = await prisma.payment.findUnique({ where: { reference } });
   if (existing) return res.json({ payment: existing, duplicate: true });
-  const payment = await prisma.payment.create({ data: { reference, userId: req.user.id, amountKobo, provider: config.paymentProvider } });
+  const payment = await prisma.payment.create({ data: { reference, userId: req.user.id, amountKobo: BigInt(amountKobo), provider: config.paymentProvider } });
   try {
     const initialized = await paymentProvider().initialize({ reference, amountKobo, email: req.user.email });
     await prisma.payment.update({ where: { id: payment.id }, data: { providerRef: initialized.providerReference } });
@@ -49,7 +49,7 @@ router.post('/webhooks/paystack', asyncRoute(async (req, res) => {
   if (req.body.event === 'charge.success') {
     const data = req.body.data;
     const payment = await prisma.payment.findUnique({ where: { reference: data.reference } });
-    if (payment && payment.amountKobo === data.amount && data.status === 'success') await completePayment(payment.reference, String(data.id));
+    if (payment && payment.amountKobo === BigInt(data.amount) && data.status === 'success') await completePayment(payment.reference, String(data.id));
   }
   res.status(200).json({ received: true });
 }));

@@ -1,0 +1,68 @@
+services:
+  database:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paypoint
+      POSTGRES_USER: paypoint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - paypoint_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paypoint -d paypoint"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build: .
+    environment: &app_environment
+      NODE_ENV: production
+      LIVE_MODE: ${LIVE_MODE:-false}
+      PORT: 3000
+      APP_URL: ${APP_URL:?Set APP_URL}
+      DATABASE_URL: postgresql://paypoint:${POSTGRES_PASSWORD}@database:5432/paypoint?schema=public
+      SESSION_COOKIE_NAME: paypoint_session
+      SESSION_TTL_DAYS: 7
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:?Set PAYMENT_PROVIDER}
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
+      PAYSTACK_CALLBACK_URL: ${APP_URL}/dashboard.html
+      VTU_PROVIDER: ${VTU_PROVIDER:?Set VTU_PROVIDER}
+      VTPASS_API_KEY: ${VTPASS_API_KEY:-}
+      VTPASS_PUBLIC_KEY: ${VTPASS_PUBLIC_KEY:-}
+      VTPASS_SECRET_KEY: ${VTPASS_SECRET_KEY:-}
+      VTPASS_BASE_URL: ${VTPASS_BASE_URL:-https://sandbox.vtpass.com/api}
+      RECONCILIATION_INTERVAL_SECONDS: 60
+      RECONCILIATION_MAX_RETRIES: 10
+    depends_on:
+      database:
+        condition: service_healthy
+    command: ["./node_modules/.bin/prisma", "migrate", "deploy"]
+    restart: "no"
+
+  api:
+    build: .
+    restart: unless-stopped
+    environment: *app_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build: .
+    restart: unless-stopped
+    environment: *app_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["node", "src/worker.js"]
+
+volumes:
+  paypoint_postgres:

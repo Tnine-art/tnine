@@ -1,8 +1,8 @@
 node_modules/
 .agents/
 .env
+prisma/*.db
+prisma/*.db-journal
 *.log
-prisma/dev.db
-prisma/dev.db-journal
 coverage/
 .DS_Store

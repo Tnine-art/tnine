@@ -54,7 +54,7 @@
 
     <section class="service-area" id="serviceArea">
       <article class="service-panel active" data-panel="airtime">
-        <div class="panel-heading"><div><span class="feature-icon purple">↗</span><div><h2>Buy airtime</h2><p>Recharge any Nigerian phone number instantly.</p></div></div><span class="demo-pill">SANDBOX MODE</span></div>
+        <div class="panel-heading"><div><span class="feature-icon purple">↗</span><div><h2>Buy airtime</h2><p>Recharge any Nigerian phone number instantly.</p></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
         <form class="purchase-form" id="airtimeForm">
           <label>Mobile network<select name="network" required><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select></label>
           <label>Phone number<input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required></label>
@@ -63,7 +63,7 @@
         </form>
       </article>
       <article class="service-panel" data-panel="data">
-        <div class="panel-heading"><div><span class="feature-icon green">⌁</span><div><h2>Buy data</h2><p>Select a plan and get connected in seconds.</p></div></div><span class="demo-pill">SANDBOX MODE</span></div>
+        <div class="panel-heading"><div><span class="feature-icon green">⌁</span><div><h2>Buy data</h2><p>Select a plan and get connected in seconds.</p></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
         <form class="purchase-form" id="dataForm">
           <label>Data plan<select name="plan" required><option value="">Loading plans…</option></select></label>
           <label>Phone number<input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required></label>
@@ -71,7 +71,7 @@
         </form>
       </article>
       <article class="service-panel" data-panel="fund">
-        <div class="panel-heading"><div><span class="feature-icon orange">＋</span><div><h2>Fund wallet</h2><p>Add funds through the configured payment provider.</p></div></div><span class="demo-pill">SANDBOX — NO CHARGE</span></div>
+        <div class="panel-heading"><div><span class="feature-icon orange">＋</span><div><h2>Fund wallet</h2><p>Add funds through the configured payment provider.</p></div></div><span class="demo-pill" data-environment-label>SANDBOX — NO CHARGE</span></div>
         <form class="purchase-form compact-form" id="fundForm">
           <label>Amount (₦)<input name="amount" type="number" min="100" max="1000000" step="100" placeholder="10,000" required></label>
           <button class="btn btn-primary" type="submit">Add demo funds →</button>
@@ -83,7 +83,7 @@
       <div class="dashboard-title"><div><h2>Recent transactions</h2><p>Your latest wallet activity.</p></div><span class="secure-label">◆ Secure records</span></div>
       <div class="transaction-list" id="transactionList"></div>
     </section>
-    <footer class="dashboard-footer"><span>© 2026 PayPoint. Demo product.</span><a href="index.html">Back to website</a></footer>
+    <footer class="dashboard-footer"><span>© 2026 PayPoint. All rights reserved.</span><a href="index.html">Back to website</a></footer>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="confirm-modal" id="confirmModal" aria-hidden="true"><div class="confirm-backdrop"></div><section class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle"><span class="confirm-icon">✓</span><h2 id="confirmTitle">Confirm transaction</h2><p id="confirmMessage"></p><div><button class="btn btn-ghost" type="button" id="cancelConfirm">Cancel</button><button class="btn btn-primary" type="button" id="approveConfirm">Confirm purchase</button></div></section></div>

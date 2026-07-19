@@ -26,7 +26,7 @@ async function makePurchase(req, res, details) {
   const reference = idempotentReference(req, 'ord');
   const previous = await prisma.serviceOrder.findUnique({ where: { reference } });
   if (previous) return res.json({ order: previous, duplicate: true });
-  const order = await prisma.serviceOrder.create({ data: { reference, userId: req.user.id, provider: config.vtuProvider, status: 'PENDING', ...details } });
+  const order = await prisma.serviceOrder.create({ data: { reference, userId: req.user.id, provider: config.vtuProvider, status: 'PENDING', ...details, amountKobo: BigInt(details.amountKobo) } });
   let debit;
   try {
     debit = await postBalancedTransaction({

@@ -65,6 +65,10 @@
       try { await api(`/auth/${authMode}`, { method: 'POST', body: JSON.stringify(payload) }); window.location.href = 'dashboard.html'; }
       catch (error) { toast(error.message, 'error'); loading(button, false); }
     });
+    api('/config').then(environment => {
+      const note = document.querySelector('[data-sandbox-note]');
+      if (note && environment.liveMode) note.textContent = 'Secure access — never share your password or payment authorization codes.';
+    }).catch(() => {});
     setAuthMode('login');
   }
 
@@ -81,7 +85,12 @@
   async function setupDashboard() {
     if (!byId('dashboardApp')) return;
     try {
-      const [{ user }, wallet, historyResponse, catalog] = await Promise.all([api('/auth/me'), api('/wallet'), api('/wallet/transactions'), api('/services/plans')]);
+      const [{ user }, wallet, historyResponse, catalog, environment] = await Promise.all([api('/auth/me'), api('/wallet'), api('/wallet/transactions'), api('/services/plans'), api('/config')]);
+      if (user.role === 'ADMIN') return window.location.replace('admin.html');
+      document.querySelectorAll('[data-environment-label]').forEach(el => {
+        el.textContent = environment.liveMode ? 'LIVE SERVICE' : (el.textContent.includes('NO CHARGE') ? 'SANDBOX — NO CHARGE' : 'SANDBOX MODE');
+        el.classList.toggle('live', environment.liveMode);
+      });
       plans = catalog.plans; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans();
     } catch (error) {
       if (error.status === 401) return window.location.replace('index.html');

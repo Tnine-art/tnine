@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -61,6 +61,7 @@ model User {
   account         LedgerAccount?
   payments        Payment[]
   orders          ServiceOrder[]
+  auditLogs       AuditLog[]     @relation("AuditActor")
 }
 
 model Session {
@@ -80,7 +81,7 @@ model LedgerAccount {
   type        AccountType
   name        String
   userId      String?         @unique
-  balanceKobo Int             @default(0)
+  balanceKobo BigInt          @default(0)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   user        User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -107,7 +108,7 @@ model LedgerPosting {
   id            String            @id @default(cuid())
   transactionId String
   accountId     String
-  amountKobo    Int
+  amountKobo    BigInt
   createdAt     DateTime          @default(now())
   transaction   LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   account       LedgerAccount     @relation(fields: [accountId], references: [id])
@@ -120,7 +121,7 @@ model Payment {
   id                  String             @id @default(cuid())
   reference           String             @unique
   userId              String
-  amountKobo          Int
+  amountKobo          BigInt
   provider            String
   providerRef         String?
   status              PaymentStatus      @default(PENDING)
@@ -142,17 +143,35 @@ model ServiceOrder {
   phone               String
   planCode            String?
   description         String
-  amountKobo          Int
+  amountKobo          BigInt
   provider            String
   providerRef         String?
   status              OrderStatus        @default(PENDING)
   ledgerTransactionId String?            @unique
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+  lastCheckedAt       DateTime?
+  retryCount          Int                @default(0)
   user                User               @relation(fields: [userId], references: [id])
   ledgerTransaction   LedgerTransaction? @relation(fields: [ledgerTransactionId], references: [id])
 
   @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model IdempotencyKey {

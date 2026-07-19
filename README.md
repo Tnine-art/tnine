@@ -1,51 +1,110 @@
 # PayPoint
 
-PayPoint is a full-stack airtime and data platform. The repository contains the responsive customer frontend, an Express API, secure server-side sessions, a balanced wallet ledger, Prisma database models, and isolated payment/VTU provider adapters.
+PayPoint is a full-stack airtime and data platform with a responsive customer experience, secure Express API, PostgreSQL ledger, payment and VTU provider adapters, a restricted operations dashboard, and a pending-order reconciliation worker.
 
-## Local development
+## Current operating state
 
-Requirements: Node.js 22 or newer.
+The application is production-structured but intentionally starts with `LIVE_MODE=false`. That state uses test provider credentials and must remain active until Paystack, VTpass, compliance, support, monitoring, and reconciliation checks have been approved.
 
-1. Copy `.env.example` to `.env`.
-2. Keep `PAYMENT_PROVIDER=mock` and `VTU_PROVIDER=mock` for local development.
-3. Run `npm install`.
-4. Run `npm run db:generate` and `npx prisma db push`.
+`LIVE_MODE=true` is guarded. Startup fails unless all of the following are present:
+
+- `NODE_ENV=production`
+- an HTTPS `APP_URL`
+- `PAYMENT_PROVIDER=paystack`
+- a Paystack secret beginning with `sk_live_`
+- `VTU_PROVIDER=vtpass`
+- VTpass credentials and a non-sandbox URL
+
+## Local PostgreSQL setup
+
+Requirements: Node.js 22+, PostgreSQL, and npm.
+
+1. Copy `.env.example` to `.env` and set a local PostgreSQL `DATABASE_URL`.
+2. Keep `NODE_ENV=development`, `LIVE_MODE=false`, `PAYMENT_PROVIDER=mock`, and `VTU_PROVIDER=mock`.
+3. Run `npm ci`.
+4. Run `npm run db:generate` and `npm run db:deploy`.
 5. Run `npm run dev`.
-6. Open `http://localhost:3000` rather than opening the HTML file directly.
+6. In another terminal, run `npm run worker`.
+7. Open `http://localhost:3000`.
 
-The mock checkout credits only the local development database. It is disabled automatically when `NODE_ENV=production`.
+The mock checkout exists only outside production and never charges real money.
 
-## Provider configuration
+## Container deployment
 
-For Paystack sandbox payments, set `PAYMENT_PROVIDER=paystack` and add the Paystack test secret key. Configure the webhook URL as:
+`compose.yaml` defines PostgreSQL, a one-time migration service, the API, and the reconciliation worker. Create a deployment `.env` containing at least:
+
+```env
+POSTGRES_PASSWORD=use-a-long-url-safe-password
+APP_URL=https://your-domain.example
+LIVE_MODE=false
+PAYMENT_PROVIDER=paystack
+PAYSTACK_SECRET_KEY=sk_test_replace_me
+VTU_PROVIDER=vtpass
+VTPASS_API_KEY=replace_me
+VTPASS_PUBLIC_KEY=replace_me
+VTPASS_SECRET_KEY=replace_me
+VTPASS_BASE_URL=https://sandbox.vtpass.com/api
+```
+
+Then run `docker compose up --build -d`. Terminate TLS at a trusted reverse proxy or managed load balancer. Do not expose PostgreSQL publicly.
+
+## Administrator setup
+
+Set `ADMIN_EMAIL` and an `ADMIN_PASSWORD` containing at least 12 characters in the process environment, then run:
+
+```bash
+npm run admin:create
+```
+
+Log in from the normal account form. Administrator accounts are redirected to `/admin.html`. The operations dashboard exposes customer balances, orders, payment volume, provider reconciliation controls, and the audit trail.
+
+Remove `ADMIN_PASSWORD` from the environment immediately after provisioning. Administrator MFA and IP/access policies are still required before public launch.
+
+## Paystack
+
+Set the Paystack webhook to:
 
 `https://your-domain.example/api/payments/webhooks/paystack`
 
-For VTpass sandbox delivery, set `VTU_PROVIDER=vtpass` and provide the sandbox credentials. Review and replace the placeholder plan codes in `src/routes/services.js` with variation codes returned by the provider before enabling it.
+The backend initializes payments, verifies webhook signatures, matches reference/status/amount, and credits the wallet idempotently. Secret keys must be stored only in the deployment secret manager.
 
-Never place provider secret keys in `scripts.js`, HTML, source control, or any browser-visible configuration.
+## VTpass
 
-## Safety properties
+The adapter supports purchase and transaction requery. Before activation:
+
+- replace the placeholder plan codes and prices in `src/routes/services.js` with current provider variation codes;
+- test every plan and network in the VTpass sandbox;
+- verify success, pending, timeout, failure, and refund behavior;
+- fund and monitor the provider account;
+- confirm the correct live requery endpoint and response codes with the provider.
+
+The worker checks orders left in `PROCESSING`. Confirmed failures are refunded through a balanced ledger entry; unresolved orders remain available for restricted manual reconciliation.
+
+## Financial and security properties
 
 - Passwords use salted scrypt hashes.
-- Sessions use random opaque tokens; only token hashes are stored.
-- Session cookies are HTTP-only and become Secure in production.
-- Prices are selected and validated on the server.
+- Sessions are random opaque tokens stored as hashes and sent in HTTP-only cookies.
 - Money is represented as integer kobo.
-- Wallet operations create equal and opposite ledger postings.
-- Conditional debits prevent negative wallet balances.
-- Idempotency keys protect payment and purchase submission.
-- Failed VTU delivery after debit creates an automatic refund.
-- Paystack webhooks require a valid signature and matching reference, status, and amount.
+- Prices and plans are controlled by the server.
+- Wallet movements have equal and opposite postings.
+- Conditional updates prevent negative wallet balances.
+- Idempotency protects payment and purchase submission.
+- Paystack webhooks require valid signatures.
+- Administrative operations are role-protected and audited.
+- Mock providers cannot run with `NODE_ENV=production`.
+- Live mode cannot start with sandbox configuration.
 
-## Before production
+## Required before public launch
 
-- Switch SQLite to PostgreSQL and create reviewed migrations.
-- Add verified production Paystack and VTU credentials through the hosting secret manager.
-- Replace placeholder data-plan codes and prices.
-- Add email verification, password recovery, MFA for administrators, and an admin interface.
-- Add structured logs, error monitoring, backups, alerting, provider reconciliation, and background status requery jobs.
-- Complete security, privacy, legal, and regulatory review.
-- Run load, penetration, accessibility, and disaster-recovery testing.
+- verified Paystack and VTpass production accounts;
+- reviewed plan codes, retail prices, margins, and refund rules;
+- email verification and password recovery provider;
+- administrator MFA and separation of duties;
+- provider balance alerts and daily financial reconciliation;
+- structured logs, error tracking, uptime monitoring, and incident response;
+- encrypted PostgreSQL backups and restoration drills;
+- load, penetration, accessibility, and disaster-recovery testing;
+- approved privacy notice, customer terms, complaint process, and regulatory operating model;
+- a cleared product name, production domain, and real support contacts.
 
-The current provider configuration is deliberately sandbox-only and must not be presented as processing real money.
+Never commit `.env`, production credentials, customer exports, or database backups.

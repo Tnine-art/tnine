@@ -1,0 +1,8 @@
+.git
+.agents
+.env
+node_modules
+prisma/dev.db*
+coverage
+*.log
+tests
