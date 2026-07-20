@@ -231,13 +231,13 @@
   function renderPlans(catalog) {
     const select = byId('dataForm').elements.plan;
     select.innerHTML = '<option value="">Choose a plan</option>' + plans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.network)} ${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
-    const tvSelect = byId('tvForm')?.elements.plan;
-    if (tvSelect) {
+    const tvForm = byId('tvForm'), tvSelect = tvForm?.elements.plan, providerSelect = tvForm?.elements.provider;
+    if (tvSelect && providerSelect) {
       const providers = [...new Set(tvPlans.map(plan => plan.provider))];
-      tvSelect.innerHTML = '<option value="">Choose a TV service and package</option>' + providers.map(provider =>
-        `<optgroup label="${escapeHtml(provider)}">${tvPlans.filter(plan => plan.provider === provider).map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('')}</optgroup>`
-      ).join('');
+      providerSelect.innerHTML = '<option value="">Choose a TV service</option>' + providers.map(provider => `<option value="${escapeHtml(provider)}">${escapeHtml(provider)}</option>`).join('');
+      providerSelect.addEventListener('change', updateTvPackageOptions);
       tvSelect.addEventListener('change', updateTvAccountField);
+      updateTvPackageOptions();
     }
     const providerCatalog = catalog?.source === 'vtpass';
     document.querySelectorAll('[data-catalog-status]').forEach(element => {
@@ -247,15 +247,30 @@
       element.classList.toggle('live', providerCatalog);
     });
   }
+  function updateTvPackageOptions() {
+    const form = byId('tvForm'), provider = form.elements.provider.value, select = form.elements.plan;
+    const providerPlans = tvPlans.filter(plan => plan.provider === provider);
+    select.disabled = !provider;
+    select.innerHTML = provider
+      ? `<option value="">Choose a ${escapeHtml(provider)} package</option>` + providerPlans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('')
+      : '<option value="">Select a TV service first</option>';
+    document.querySelector('[data-tv-package-help]').textContent = provider ? `${providerPlans.length} current ${provider} packages available.` : 'Packages will appear after choosing a service.';
+    updateTvAccountField();
+  }
   function updateTvAccountField() {
     const form = byId('tvForm'), plan = tvPlans.find(item => item.code === form.elements.plan.value), isPhone = plan?.customerReferenceType === 'phone';
-    const input = form.elements.smartcardNumber;
+    const input = form.elements.smartcardNumber, referenceType = isPhone ? 'phone' : 'smartcard';
     document.querySelector('[data-tv-account-label]').textContent = isPhone ? `${plan.provider} account phone` : 'Smartcard / IUC number';
     document.querySelector('[data-tv-account-help]').textContent = isPhone ? 'Enter the Nigerian phone number connected to this subscription.' : 'Use the number printed on your decoder card.';
     input.placeholder = isPhone ? '0801 234 5678' : 'Enter decoder number';
     input.minLength = isPhone ? 11 : 6;
     input.maxLength = isPhone ? 11 : 15;
-    input.value = '';
+    if (input.dataset.referenceType && input.dataset.referenceType !== referenceType) input.value = '';
+    input.dataset.referenceType = referenceType;
+    document.querySelector('[data-tv-summary-service]').textContent = plan?.provider || form.elements.provider.value || 'No service selected';
+    document.querySelector('[data-tv-summary-package]').textContent = plan?.name || 'Choose a service and package to continue.';
+    document.querySelector('[data-tv-package-price]').textContent = plan ? money(plan.amountKobo) : '—';
+    form.querySelector('[type="submit"]').disabled = !plan;
   }
   async function loadVirtualAccount(environment) {
     const { virtualAccount } = await api('/wallet/virtual-account');
@@ -348,7 +363,7 @@
     loading(button, true, 'Processing subscription…');
     try {
       await api('/services/tv', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ planCode: plan.code, smartcardNumber, phone }) });
-      form.reset(); toast('TV subscription completed successfully.'); await refreshWallet();
+      form.reset(); updateTvPackageOptions(); toast('TV subscription completed successfully.'); await refreshWallet();
     } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
   }
   async function updateProfile(event) {

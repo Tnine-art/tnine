@@ -86,12 +86,23 @@
         </form>
       </article>
       <article class="service-panel" data-panel="tv">
-        <div class="panel-heading"><div><span class="feature-icon red">▣</span><div><h2>TV subscription</h2><p>Renew DStv, GOtv or StarTimes with current provider packages.</p><small class="catalog-status" data-catalog-status>Checking provider catalog…</small></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
+        <div class="panel-heading"><div><span class="feature-icon red">▣</span><div><h2>TV subscriptions</h2><p>Pay for DStv, GOtv, StarTimes and Showmax from one place.</p><small class="catalog-status" data-catalog-status>Checking provider catalog…</small></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
         <form class="purchase-form tv-form" id="tvForm">
-          <label>TV package<select name="plan" required><option value="">Loading packages…</option></select></label>
-          <label id="tvAccountLabel"><span data-tv-account-label>Smartcard / IUC number</span><input name="smartcardNumber" inputmode="numeric" minlength="6" maxlength="15" placeholder="Enter decoder number" aria-describedby="tvAccountHelp" required><small class="field-help" id="tvAccountHelp" data-tv-account-help>Use the number printed on your decoder card.</small></label>
-          <label>Contact phone<input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required></label>
-          <button class="btn btn-primary" type="submit">Pay subscription →</button>
+          <div class="tv-form-fields">
+            <label><span><b>1</b> TV service</span><select name="provider" required><option value="">Loading services…</option></select><small class="field-help">Choose the service you want to pay for.</small></label>
+            <label><span><b>2</b> Subscription package</span><select name="plan" required disabled><option value="">Select a TV service first</option></select><small class="field-help" data-tv-package-help>Packages will appear after choosing a service.</small></label>
+            <label id="tvAccountLabel"><span><b>3</b> <i data-tv-account-label>Smartcard / IUC number</i></span><input name="smartcardNumber" inputmode="numeric" minlength="6" maxlength="15" placeholder="Enter decoder number" aria-describedby="tvAccountHelp" required><small class="field-help" id="tvAccountHelp" data-tv-account-help>Use the number printed on your decoder card.</small></label>
+            <label><span><b>4</b> Contact phone</span><input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required><small class="field-help">We use this for the transaction record.</small></label>
+          </div>
+          <aside class="tv-order-summary" aria-live="polite">
+            <span class="tv-summary-icon">▣</span>
+            <small>SUBSCRIPTION SUMMARY</small>
+            <h3 data-tv-summary-service>No service selected</h3>
+            <p data-tv-summary-package>Choose a service and package to continue.</p>
+            <div><span>Amount to pay</span><strong data-tv-package-price>—</strong></div>
+            <button class="btn btn-primary" type="submit" disabled>Pay subscription →</button>
+            <small class="tv-secure-note">✓ Price confirmed by the service provider</small>
+          </aside>
         </form>
       </article>
       <article class="service-panel" data-panel="fund">
