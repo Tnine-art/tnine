@@ -32,6 +32,7 @@
 @media(max-width:950px){.funding-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.virtual-account-card,.funding-checkout-card{padding:19px}.account-number-row strong{font-size:21px;letter-spacing:1px}.virtual-account-card dl{grid-template-columns:1fr}.account-status{display:none}}
 .balance-loading{height:39px;display:flex;align-items:center}.balance-skeleton{display:block;width:175px;height:27px;border-radius:7px;background:linear-gradient(90deg,rgba(255,255,255,.16) 25%,rgba(255,255,255,.32) 45%,rgba(255,255,255,.16) 65%);background-size:220% 100%;animation:balance-shimmer 1.25s ease-in-out infinite}@keyframes balance-shimmer{to{background-position:-220% 0}}
+.name-loading{display:inline-flex;width:92px;height:24px;vertical-align:-3px}.name-skeleton{display:block;width:100%;height:100%;border-radius:7px;background:linear-gradient(90deg,#dce4ef 25%,#edf2f7 45%,#dce4ef 65%);background-size:220% 100%;animation:name-shimmer 1.25s ease-in-out infinite}@keyframes name-shimmer{to{background-position:-220% 0}}html[data-theme="dark"] .name-skeleton{background:linear-gradient(90deg,#26354a 25%,#34465e 45%,#26354a 65%);background-size:220% 100%}
 
 /* Softer dashboard typography, profile settings, and theme system */
 :root{--font-rounded:ui-rounded,"Nunito Sans","Avenir Next","Segoe UI",sans-serif;--surface:#fff;--surface-soft:#f6f8fc;--surface-raised:#fff;--text:#0b1b3b;--text-soft:#65728a;--dashboard-shadow:0 8px 24px rgba(16,39,84,.055)}

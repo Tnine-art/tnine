@@ -160,6 +160,7 @@
       });
     } catch (error) {
       if (error.status === 401) return window.location.replace('login.html');
+      document.querySelectorAll('[data-first-name]').forEach(el => { el.classList.remove('name-loading'); el.textContent = 'there'; el.setAttribute('aria-busy', 'false'); });
       document.querySelectorAll('[data-balance]').forEach(el => { el.classList.remove('balance-loading'); el.textContent = 'Unavailable'; el.setAttribute('aria-busy', 'false'); });
       toast(error.message, 'error');
     }
@@ -196,7 +197,7 @@
   }
   function renderUser(user) {
     const firstName = user.name.split(' ')[0] || 'there';
-    document.querySelectorAll('[data-first-name]').forEach(el => { el.textContent = firstName; });
+    document.querySelectorAll('[data-first-name]').forEach(el => { el.classList.remove('name-loading'); el.textContent = firstName; el.setAttribute('aria-busy', 'false'); });
     document.querySelectorAll('[data-user-name]').forEach(el => { el.textContent = user.name; });
     document.querySelectorAll('[data-initials]').forEach(el => { el.textContent = user.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase(); });
     document.querySelectorAll('[data-profile-email]').forEach(el => { el.textContent = user.email; });
