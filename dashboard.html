@@ -149,6 +149,28 @@
     <footer class="dashboard-footer"><span>© 2026 PayPoint. All rights reserved.</span><a href="index.html">Back to website</a></footer>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="receipt-modal" id="receiptModal" aria-hidden="true">
+    <div class="receipt-backdrop" data-close-receipt></div>
+    <section class="receipt-dialog" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">
+      <header class="receipt-dialog-header"><div><span class="brand-mark">P</span><div><strong>PayPoint</strong><small>Transaction receipt</small></div></div><button type="button" data-close-receipt aria-label="Close receipt">×</button></header>
+      <div class="receipt-paper" id="receiptPaper">
+        <div class="receipt-brand"><div><span class="brand-mark">P</span><div><strong>PayPoint</strong><small>Secure everyday payments</small></div></div><span class="receipt-environment" data-receipt-environment>SANDBOX RECEIPT</span></div>
+        <div class="receipt-success"><span>✓</span><small>Transaction status</small><h2 id="receiptTitle">Successful</h2><strong data-receipt-amount>₦0.00</strong><p data-receipt-description>Transaction completed successfully</p></div>
+        <dl class="receipt-details">
+          <div><dt>Receipt number</dt><dd data-receipt-number>—</dd></div>
+          <div><dt>Transaction reference</dt><dd data-receipt-reference>—</dd></div>
+          <div><dt>Transaction type</dt><dd data-receipt-type>—</dd></div>
+          <div><dt>Date & time</dt><dd data-receipt-date>—</dd></div>
+          <div data-receipt-counterparty-row hidden><dt>Counterparty</dt><dd data-receipt-counterparty>—</dd></div>
+          <div data-receipt-provider-row hidden><dt>Service provider</dt><dd data-receipt-provider>—</dd></div>
+          <div data-receipt-customer-ref-row hidden><dt>Customer reference</dt><dd data-receipt-customer-ref>—</dd></div>
+          <div><dt>Account holder</dt><dd data-receipt-customer>—</dd></div>
+        </dl>
+        <footer class="receipt-footer"><span>◆</span><p>This receipt was generated from PayPoint's secure ledger.<small>Keep the transaction reference when contacting support.</small></p></footer>
+      </div>
+      <div class="receipt-actions"><button class="btn btn-ghost" type="button" data-close-receipt>Close</button><button class="btn btn-primary" type="button" id="printReceipt">Print / Save PDF</button></div>
+    </section>
+  </div>
   <div class="confirm-modal" id="confirmModal" aria-hidden="true"><div class="confirm-backdrop"></div><section class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle"><span class="confirm-icon">✓</span><h2 id="confirmTitle">Confirm transaction</h2><p id="confirmMessage"></p><div><button class="btn btn-ghost" type="button" id="cancelConfirm">Cancel</button><button class="btn btn-primary" type="button" id="approveConfirm">Confirm purchase</button></div></section></div>
   <script src="scripts.js"></script>
 </body>

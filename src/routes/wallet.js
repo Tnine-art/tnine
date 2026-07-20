@@ -8,6 +8,7 @@ const { ApiError, asyncRoute } = require('../lib/http');
 const { idempotentReference } = require('../lib/idempotency');
 const router = express.Router();
 const transferSchema = z.object({ recipientEmail: z.email().transform(value => value.trim().toLowerCase()), amountKobo: z.int().min(10000).max(100000000), note: z.string().trim().max(80).optional() });
+const receiptReference = z.string().regex(/^[a-z0-9_-]{8,80}$/i);
 
 router.use(authenticate);
 router.get('/', asyncRoute(async (req, res) => {
@@ -51,6 +52,43 @@ router.get('/transactions', asyncRoute(async (req, res) => {
     id: item.transaction.id, reference: item.transaction.reference, type: item.transaction.type,
     status: item.transaction.status, description: item.transaction.description, amountKobo: item.amountKobo, createdAt: item.createdAt
   })) });
+}));
+router.get('/transactions/:reference/receipt', asyncRoute(async (req, res) => {
+  const reference = receiptReference.parse(req.params.reference);
+  const account = await prisma.ledgerAccount.findUnique({ where: { userId: req.user.id } });
+  const posting = await prisma.ledgerPosting.findFirst({
+    where: { accountId: account.id, transaction: { reference } },
+    include: {
+      transaction: {
+        include: {
+          payment: true, order: true,
+          postings: { include: { account: { include: { user: { select: { id: true, name: true, email: true } } } } } }
+        }
+      }
+    }
+  });
+  if (!posting) throw new ApiError(404, 'RECEIPT_NOT_FOUND', 'This receipt was not found for your account.');
+  const transaction = posting.transaction, counterpartyPosting = transaction.postings.find(item => item.account.user && item.account.user.id !== req.user.id);
+  const counterparty = counterpartyPosting?.account.user || null, incoming = posting.amountKobo > 0n;
+  const description = transaction.type === 'TRANSFER' && counterparty
+    ? `${incoming ? 'Money received from' : 'Money sent to'} ${counterparty.name}`
+    : transaction.description;
+  res.json({
+    receipt: {
+      receiptNumber: `PP-${transaction.id.slice(-10).toUpperCase()}`,
+      reference: transaction.reference, type: transaction.type, status: transaction.status, description,
+      amountKobo: posting.amountKobo < 0n ? -posting.amountKobo : posting.amountKobo,
+      direction: incoming ? 'credit' : 'debit', currency: 'NGN', createdAt: posting.createdAt,
+      environment: config.liveMode ? 'live' : 'sandbox',
+      customer: { name: req.user.name, email: req.user.email },
+      counterparty: counterparty ? { name: counterparty.name, email: counterparty.email } : null,
+      service: transaction.order ? {
+        provider: transaction.order.network, customerReference: transaction.order.phone,
+        planCode: transaction.order.planCode, providerReference: transaction.order.providerRef
+      } : null,
+      payment: transaction.payment ? { provider: transaction.payment.provider, providerReference: transaction.payment.providerRef } : null
+    }
+  });
 }));
 router.post('/transfers', asyncRoute(async (req, res) => {
   const data = transferSchema.parse(req.body);

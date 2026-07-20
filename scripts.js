@@ -176,6 +176,14 @@
     byId('changePasswordForm').addEventListener('submit', changePassword);
     byId('themeToggle').addEventListener('click', toggleTheme);
     byId('appearanceToggle').addEventListener('click', toggleTheme);
+    byId('transactionList').addEventListener('click', event => {
+      const button = event.target.closest('[data-view-receipt]');
+      if (button) openReceipt(button.dataset.viewReceipt, button);
+    });
+    document.querySelectorAll('[data-close-receipt]').forEach(button => button.addEventListener('click', closeReceipt));
+    byId('printReceipt').addEventListener('click', () => { document.body.classList.add('printing-receipt'); window.print(); });
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-receipt'));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && byId('receiptModal').classList.contains('open')) closeReceipt(); });
     setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
     byId('logoutButton').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST' }); } finally { window.location.href = 'index.html'; } });
   }
@@ -198,7 +206,7 @@
     const kind = { WALLET_FUNDING: ['wallet', '+'], AIRTIME: ['mtn', 'A'], DATA: ['glo', 'D'], TRANSFER: ['wallet', '⇄'], TV: ['airtel', 'TV'], REFUND: ['wallet', '↩'], ADJUSTMENT: ['wallet', '±'] };
     list.innerHTML = transactions.map(tx => {
       const style = kind[tx.type] || ['wallet', '•'], positive = tx.amountKobo > 0;
-      return `<div class="transaction-row"><span class="tx-icon ${style[0]}">${style[1]}</span><div><strong>${escapeHtml(tx.description)}</strong><small>${new Date(tx.createdAt).toLocaleString('en-NG')}</small></div><strong class="tx-amount ${positive ? 'credit' : ''}">${positive ? '+' : '−'}${money(Math.abs(tx.amountKobo))}</strong><span class="tx-status">${escapeHtml(tx.status)}</span></div>`;
+      return `<div class="transaction-row"><span class="tx-icon ${style[0]}">${style[1]}</span><div><strong>${escapeHtml(tx.description)}</strong><small>${new Date(tx.createdAt).toLocaleString('en-NG')}</small></div><strong class="tx-amount ${positive ? 'credit' : ''}">${positive ? '+' : '−'}${money(Math.abs(tx.amountKobo))}</strong><span class="tx-status">${escapeHtml(tx.status)}</span><button class="receipt-button" type="button" data-view-receipt="${escapeHtml(tx.reference)}">Receipt</button></div>`;
     }).join('');
   }
   const escapeHtml = value => String(value).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
@@ -294,6 +302,33 @@
       await api('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword: String(data.get('currentPassword')), newPassword }) });
       form.reset(); toast('Password updated. Your other sessions have been signed out.');
     } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
+  }
+  function closeReceipt() {
+    const modal = byId('receiptModal'); modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); document.body.classList.remove('receipt-open');
+  }
+  async function openReceipt(reference, trigger) {
+    loading(trigger, true, 'Loading…');
+    try {
+      const { receipt } = await api(`/wallet/transactions/${encodeURIComponent(reference)}/receipt`);
+      const typeLabels = { WALLET_FUNDING: 'Wallet funding', AIRTIME: 'Airtime purchase', DATA: 'Data purchase', TRANSFER: receipt.direction === 'credit' ? 'Money received' : 'Money transfer', TV: 'TV subscription', REFUND: 'Refund', ADJUSTMENT: 'Wallet adjustment' };
+      document.querySelector('[data-receipt-amount]').textContent = `${receipt.direction === 'credit' ? '+' : '−'}${money(receipt.amountKobo)}`;
+      document.querySelector('[data-receipt-amount]').classList.toggle('credit', receipt.direction === 'credit');
+      document.querySelector('[data-receipt-description]').textContent = receipt.description;
+      byId('receiptTitle').textContent = receipt.status.charAt(0) + receipt.status.slice(1).toLowerCase();
+      document.querySelector('[data-receipt-number]').textContent = receipt.receiptNumber;
+      document.querySelector('[data-receipt-reference]').textContent = receipt.reference;
+      document.querySelector('[data-receipt-type]').textContent = typeLabels[receipt.type] || receipt.type;
+      document.querySelector('[data-receipt-date]').textContent = new Date(receipt.createdAt).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' });
+      document.querySelector('[data-receipt-customer]').textContent = `${receipt.customer.name} · ${receipt.customer.email}`;
+      document.querySelector('[data-receipt-environment]').textContent = receipt.environment === 'live' ? 'OFFICIAL RECEIPT' : 'SANDBOX RECEIPT';
+      const optional = [
+        ['[data-receipt-counterparty-row]', '[data-receipt-counterparty]', receipt.counterparty ? `${receipt.counterparty.name} · ${receipt.counterparty.email}` : null],
+        ['[data-receipt-provider-row]', '[data-receipt-provider]', receipt.service?.provider || receipt.payment?.provider || null],
+        ['[data-receipt-customer-ref-row]', '[data-receipt-customer-ref]', receipt.service?.customerReference || null]
+      ];
+      optional.forEach(([rowSelector, valueSelector, value]) => { const row = document.querySelector(rowSelector); row.hidden = !value; if (value) document.querySelector(valueSelector).textContent = value; });
+      const modal = byId('receiptModal'); modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('receipt-open'); modal.querySelector('[data-close-receipt]').focus();
+    } catch (error) { toast(error.message, 'error'); } finally { loading(trigger, false); }
   }
 
   setupLanding(); setupLoginPage(); setupRegisterPage(); setupDashboard(); setupResetPassword();

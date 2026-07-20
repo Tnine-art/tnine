@@ -26,6 +26,12 @@ test('PostgreSQL account, funding, purchase, and ledger flow', { skip: process.e
     assert.equal(order.body.order.status, 'SUCCESSFUL');
     const wallet = await request('/api/wallet');
     assert.equal(wallet.body.balanceKobo, 5000);
+    const history = await request('/api/wallet/transactions');
+    const airtimeTransaction = history.body.transactions.find(transaction => transaction.type === 'AIRTIME');
+    const receipt = await request(`/api/wallet/transactions/${airtimeTransaction.reference}/receipt`);
+    assert.equal(receipt.body.receipt.reference, airtimeTransaction.reference);
+    assert.equal(receipt.body.receipt.amountKobo, 5000);
+    assert.equal(receipt.body.receipt.customer.email, email);
     const journals = await prisma.ledgerTransaction.findMany({ include: { postings: true } });
     assert.equal(journals.length, 2);
     for (const journal of journals) assert.equal(journal.postings.reduce((sum, posting) => sum + posting.amountKobo, 0n), 0n);
