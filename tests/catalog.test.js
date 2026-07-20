@@ -35,3 +35,13 @@ test('Showmax variations request the account phone instead of a smartcard', () =
   assert.equal(plan.customerReferenceType, 'phone');
   assert.equal(plan.provider, 'Showmax');
 });
+
+test('Spectranet variations are normalized as internet data plans', () => {
+  const [plan] = normalizeVariations(
+    { serviceId: 'spectranet', type: 'data', label: 'Spectranet' },
+    { content: { variations: [{ variation_code: 'vt-1000', name: 'Spectranet N1000', variation_amount: '1000.00' }] } }
+  );
+  assert.equal(plan.network, 'Spectranet');
+  assert.equal(plan.serviceId, 'spectranet');
+  assert.equal(plan.amountKobo, 100000);
+});

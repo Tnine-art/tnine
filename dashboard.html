@@ -44,16 +44,16 @@
         <footer><span>PAYPOINT WALLET</span><span>SECURE NGN WALLET</span></footer>
       </article>
       <article class="summary-card"><span class="summary-icon purple">↗</span><div><small>Airtime purchases</small><strong>Instant</strong><p>All Nigerian networks</p></div></article>
-      <article class="summary-card"><span class="summary-icon green">⌁</span><div><small>Data bundles</small><strong>From ₦500</strong><p>Flexible monthly plans</p></div></article>
+      <article class="summary-card"><span class="summary-icon green">⌁</span><div><small>Affordable data</small><strong>From ₦25</strong><p>Provider-confirmed pricing</p></div></article>
     </section>
 
     <section class="quick-section">
       <div class="dashboard-title"><div><h2>Quick actions</h2><p>What would you like to do today?</p></div></div>
       <div class="action-grid">
         <button type="button" data-service="airtime"><span class="action-icon purple">↗</span><div><strong>Buy airtime</strong><small>Recharge any number</small></div><b>›</b></button>
-        <button type="button" data-service="data"><span class="action-icon green">⌁</span><div><strong>Buy data</strong><small>Browse affordable plans</small></div><b>›</b></button>
+        <button type="button" data-service="data"><span class="action-icon green">⌁</span><div><strong>Internet & data</strong><small>Compare plans by budget</small></div><b>›</b></button>
         <button type="button" data-service="transfer"><span class="action-icon blue">⇄</span><div><strong>Send money</strong><small>Transfer to a PayPoint user</small></div><b>›</b></button>
-        <button type="button" data-service="tv"><span class="action-icon red">▣</span><div><strong>TV subscription</strong><small>DStv, GOtv and StarTimes</small></div><b>›</b></button>
+        <button type="button" data-service="tv"><span class="action-icon red">▣</span><div><strong>TV subscription</strong><small>DStv, GOtv, StarTimes & Showmax</small></div><b>›</b></button>
         <button type="button" data-service="fund"><span class="action-icon orange">＋</span><div><strong>Fund wallet</strong><small>Add demo funds</small></div><b>›</b></button>
       </div>
     </section>
@@ -69,11 +69,23 @@
         </form>
       </article>
       <article class="service-panel" data-panel="data">
-        <div class="panel-heading"><div><span class="feature-icon green">⌁</span><div><h2>Buy data</h2><p>Select a current provider package and get connected in seconds.</p><small class="catalog-status" data-catalog-status>Checking provider catalog…</small></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
-        <form class="purchase-form" id="dataForm">
-          <label>Data plan<select name="plan" required><option value="">Loading plans…</option></select></label>
-          <label>Phone number<input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required></label>
-          <button class="btn btn-primary" type="submit">Purchase data →</button>
+        <div class="panel-heading"><div><span class="feature-icon green">⌁</span><div><h2>Internet & data plans</h2><p>Compare current packages and choose what works for your budget.</p><small class="catalog-status" data-catalog-status>Checking provider catalog…</small></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
+        <form class="purchase-form data-form" id="dataForm">
+          <div class="data-form-fields">
+            <label><span><b>1</b> Internet provider</span><select name="provider" required><option value="">Loading providers…</option></select><small class="field-help">Mobile networks and supported internet services.</small></label>
+            <label><span><b>2</b> Maximum budget</span><select name="budget"><option value="">Show every price</option><option value="50000">Up to ₦500</option><option value="100000">Up to ₦1,000</option><option value="200000">Up to ₦2,000</option><option value="500000">Up to ₦5,000</option></select><small class="field-help">Optional—use this to find affordable plans faster.</small></label>
+            <label class="full-width"><span><b>3</b> Data package</span><select name="plan" required disabled><option value="">Select an internet provider first</option></select><small class="field-help" data-data-package-help>Packages are ordered from lowest to highest price.</small></label>
+            <label class="full-width"><span><b>4</b> <i data-data-recipient-label>Recipient phone number</i></span><input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required><small class="field-help" data-data-recipient-help>Confirm the number carefully—data delivery cannot be reversed.</small></label>
+          </div>
+          <aside class="data-order-summary" aria-live="polite">
+            <span class="data-summary-icon">⌁</span>
+            <small>DATA ORDER SUMMARY</small>
+            <h3 data-data-summary-service>No provider selected</h3>
+            <p data-data-summary-package>Choose a provider and package to continue.</p>
+            <div><span>Amount to pay</span><strong data-data-package-price>—</strong></div>
+            <button class="btn btn-primary" type="submit" disabled>Purchase data →</button>
+            <small class="data-secure-note">✓ Current price confirmed by the provider</small>
+          </aside>
         </form>
       </article>
       <article class="service-panel" data-panel="transfer">

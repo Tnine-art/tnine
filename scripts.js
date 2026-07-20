@@ -229,8 +229,13 @@
   const escapeHtml = value => String(value).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
   async function refreshWallet() { const [wallet, history] = await Promise.all([api('/wallet'), api('/wallet/transactions')]); renderWallet(wallet.balanceKobo, history.transactions); }
   function renderPlans(catalog) {
-    const select = byId('dataForm').elements.plan;
-    select.innerHTML = '<option value="">Choose a plan</option>' + plans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.network)} ${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
+    const dataForm = byId('dataForm'), dataSelect = dataForm.elements.plan, dataProvider = dataForm.elements.provider;
+    const dataProviders = [...new Set(plans.map(plan => plan.network))];
+    dataProvider.innerHTML = '<option value="">Choose an internet provider</option>' + dataProviders.map(provider => `<option value="${escapeHtml(provider)}">${escapeHtml(provider)}</option>`).join('');
+    dataProvider.addEventListener('change', updateDataPackageOptions);
+    dataForm.elements.budget.addEventListener('change', updateDataPackageOptions);
+    dataSelect.addEventListener('change', updateDataSummary);
+    updateDataPackageOptions();
     const tvForm = byId('tvForm'), tvSelect = tvForm?.elements.plan, providerSelect = tvForm?.elements.provider;
     if (tvSelect && providerSelect) {
       const providers = [...new Set(tvPlans.map(plan => plan.provider))];
@@ -246,6 +251,30 @@
         : 'Demo fallback catalog · no real charge';
       element.classList.toggle('live', providerCatalog);
     });
+  }
+  function updateDataPackageOptions() {
+    const form = byId('dataForm'), provider = form.elements.provider.value, budget = Number(form.elements.budget.value || Infinity), select = form.elements.plan;
+    const providerPlans = plans.filter(plan => plan.network === provider && plan.amountKobo <= budget);
+    select.disabled = !provider || !providerPlans.length;
+    select.innerHTML = !provider
+      ? '<option value="">Select an internet provider first</option>'
+      : providerPlans.length
+        ? `<option value="">Choose a ${escapeHtml(provider)} package</option>` + providerPlans.map((plan, index) => `<option value="${escapeHtml(plan.code)}">${index < 3 ? 'Affordable pick · ' : ''}${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('')
+        : '<option value="">No packages match this budget</option>';
+    document.querySelector('[data-data-package-help]').textContent = provider
+      ? providerPlans.length ? `${providerPlans.length} packages available, ordered by lowest price.` : 'Increase your budget to see available packages.'
+      : 'Packages are ordered from lowest to highest price.';
+    updateDataSummary();
+  }
+  function updateDataSummary() {
+    const form = byId('dataForm'), plan = plans.find(item => item.code === form.elements.plan.value), provider = form.elements.provider.value;
+    const isSpectranet = provider === 'Spectranet';
+    document.querySelector('[data-data-recipient-label]').textContent = isSpectranet ? 'Spectranet mobile number' : 'Recipient phone number';
+    document.querySelector('[data-data-recipient-help]').textContent = isSpectranet ? 'Enter the mobile number linked to the Spectranet purchase.' : 'Confirm the number carefully—data delivery cannot be reversed.';
+    document.querySelector('[data-data-summary-service]').textContent = provider || 'No provider selected';
+    document.querySelector('[data-data-summary-package]').textContent = plan?.name || 'Choose a provider and package to continue.';
+    document.querySelector('[data-data-package-price]').textContent = plan ? money(plan.amountKobo) : '—';
+    form.querySelector('[type="submit"]').disabled = !plan;
   }
   function updateTvPackageOptions() {
     const form = byId('tvForm'), provider = form.elements.provider.value, select = form.elements.plan;
@@ -344,7 +373,7 @@
     if (!plan) return toast('Choose a valid data plan.', 'error');
     if (!(await confirmAction(`Buy ${plan.network} ${plan.name} for ${phone} at ${money(plan.amountKobo)}?`, 'Confirm purchase'))) return;
     loading(button, true, 'Processing purchase…');
-    try { await api('/services/data', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ planCode: plan.code, phone }) }); form.reset(); toast('Data delivered successfully.'); await refreshWallet(); }
+    try { await api('/services/data', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ planCode: plan.code, phone }) }); form.reset(); updateDataPackageOptions(); toast('Data delivered successfully.'); await refreshWallet(); }
     catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
   }
   async function sendMoney(event) {

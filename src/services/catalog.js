@@ -7,7 +7,8 @@ const DATA_SERVICES = [
   { serviceId: 'mtn-data', type: 'data', label: 'MTN' },
   { serviceId: 'airtel-data', type: 'data', label: 'Airtel' },
   { serviceId: 'glo-data', type: 'data', label: 'Glo' },
-  { serviceId: 'etisalat-data', type: 'data', label: '9mobile' }
+  { serviceId: 'etisalat-data', type: 'data', label: '9mobile' },
+  { serviceId: 'spectranet', type: 'data', label: 'Spectranet' }
 ];
 const DEFAULT_TV_SERVICES = [
   { serviceId: 'dstv', type: 'tv', label: 'DStv' },
@@ -23,7 +24,8 @@ const SANDBOX_DATA_PLANS = [
   { code: 'mtn-data:mtn-1gb-30d', variationCode: 'mtn-1gb-30d', serviceId: 'mtn-data', network: 'MTN', name: '1GB · 30 days', amountKobo: 50000 },
   { code: 'airtel-data:airtel-2gb-30d', variationCode: 'airtel-2gb-30d', serviceId: 'airtel-data', network: 'Airtel', name: '2GB · 30 days', amountKobo: 100000 },
   { code: 'glo-data:glo-5gb-30d', variationCode: 'glo-5gb-30d', serviceId: 'glo-data', network: 'Glo', name: '5GB · 30 days', amountKobo: 200000 },
-  { code: 'etisalat-data:9mobile-1_5gb-30d', variationCode: '9mobile-1_5gb-30d', serviceId: 'etisalat-data', network: '9mobile', name: '1.5GB · 30 days', amountKobo: 120000 }
+  { code: 'etisalat-data:9mobile-1_5gb-30d', variationCode: '9mobile-1_5gb-30d', serviceId: 'etisalat-data', network: '9mobile', name: '1.5GB · 30 days', amountKobo: 120000 },
+  { code: 'spectranet:vt-1000', variationCode: 'vt-1000', serviceId: 'spectranet', network: 'Spectranet', name: 'Spectranet ₦1,000 voucher', amountKobo: 100000 }
 ];
 const SANDBOX_TV_PLANS = [
   { code: 'dstv:dstv-padi', variationCode: 'dstv-padi', serviceId: 'dstv', provider: 'DStv', name: 'DStv Padi', amountKobo: 440000 },
@@ -38,7 +40,7 @@ const SANDBOX_TV_PLANS = [
 let cache;
 
 function normalizeVariations(service, body) {
-  const variations = body?.content?.variations;
+  const variations = body?.content?.variations || body?.content?.varations;
   if (!Array.isArray(variations)) return [];
   return variations.flatMap(variation => {
     const variationCode = String(variation.variation_code || '').trim();
@@ -130,8 +132,8 @@ async function getServiceCatalog({ forceRefresh = false } = {}) {
     source: complete ? 'vtpass' : 'sandbox-fallback',
     stale: false,
     refreshedAt: new Date().toISOString(),
-    plans: plans.length ? plans : SANDBOX_DATA_PLANS,
-    tvPlans: tvPlans.length ? tvPlans : SANDBOX_TV_PLANS
+    plans: [...(plans.length ? plans : SANDBOX_DATA_PLANS)].sort((a, b) => a.amountKobo - b.amountKobo || a.name.localeCompare(b.name)),
+    tvPlans: [...(tvPlans.length ? tvPlans : SANDBOX_TV_PLANS)].sort((a, b) => a.provider.localeCompare(b.provider) || a.amountKobo - b.amountKobo)
   };
   cache = { value, expiresAt: Date.now() + CACHE_TTL_MS };
   return value;
