@@ -104,6 +104,11 @@
         <div class="form-row"><label class="check-label"><input type="checkbox" name="remember"> Remember me</label><button class="link-button" type="button" id="forgotPassword">Forgot password?</button></div>
         <button class="btn btn-primary btn-block" type="submit" data-auth-submit>Log in securely →</button>
       </form>
+      <form id="forgotForm" hidden>
+        <label>Email address<input name="email" type="email" autocomplete="email" placeholder="ada@example.com" required></label>
+        <button class="btn btn-primary btn-block" type="submit">Send reset link →</button>
+        <button class="back-to-login" type="button" id="backToLogin">← Back to login</button>
+      </form>
       <small class="demo-note" data-sandbox-note>Sandbox environment — use test credentials only until production providers are activated.</small>
     </section>
   </div>

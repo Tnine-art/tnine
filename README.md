@@ -44,6 +44,9 @@ VTPASS_API_KEY=replace_me
 VTPASS_PUBLIC_KEY=replace_me
 VTPASS_SECRET_KEY=replace_me
 VTPASS_BASE_URL=https://sandbox.vtpass.com/api
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_replace_me
+EMAIL_FROM=PayPoint <no-reply@your-domain.example>
 ```
 
 Then run `docker compose up --build -d`. Terminate TLS at a trusted reverse proxy or managed load balancer. Do not expose PostgreSQL publicly.
@@ -59,6 +62,12 @@ npm run admin:create
 Log in from the normal account form. Administrator accounts are redirected to `/admin.html`. The operations dashboard exposes customer balances, orders, payment volume, provider reconciliation controls, and the audit trail.
 
 Remove `ADMIN_PASSWORD` from the environment immediately after provisioning. Administrator MFA and IP/access policies are still required before public launch.
+
+## Password recovery email
+
+Password recovery uses hashed, single-use database tokens that expire after 30 minutes. Successful password changes revoke every existing session and create an audit record.
+
+Development uses `EMAIL_PROVIDER=console`; the reset link is written to the server console. Production refuses to start unless `EMAIL_PROVIDER=resend` and `RESEND_API_KEY` are configured. Verify the sending domain with the email provider and set `EMAIL_FROM` to an address on that domain. Never expose the email API key in browser code or GitHub.
 
 ## Paystack
 

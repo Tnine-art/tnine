@@ -17,11 +17,18 @@ const config = {
   vtpassSecretKey: process.env.VTPASS_SECRET_KEY || '',
   vtpassBaseUrl: process.env.VTPASS_BASE_URL || 'https://sandbox.vtpass.com/api',
   reconciliationIntervalSeconds: Number(process.env.RECONCILIATION_INTERVAL_SECONDS || 60),
-  reconciliationMaxRetries: Number(process.env.RECONCILIATION_MAX_RETRIES || 10)
+  reconciliationMaxRetries: Number(process.env.RECONCILIATION_MAX_RETRIES || 10),
+  emailProvider: process.env.EMAIL_PROVIDER || 'console',
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  emailFrom: process.env.EMAIL_FROM || 'PayPoint <no-reply@localhost>',
+  passwordResetTtlMinutes: Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30)
 };
 
 if (config.env === 'production' && (config.paymentProvider === 'mock' || config.vtuProvider === 'mock')) {
   throw new Error('Mock providers cannot be used in production.');
+}
+if (config.env === 'production' && (config.emailProvider !== 'resend' || !config.resendApiKey)) {
+  throw new Error('Production requires configured email delivery.');
 }
 if (config.liveMode) {
   if (config.env !== 'production') throw new Error('LIVE_MODE requires NODE_ENV=production.');

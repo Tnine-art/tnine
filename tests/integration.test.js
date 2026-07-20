@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 test('PostgreSQL account, funding, purchase, and ledger flow', { skip: process.env.INTEGRATION_DATABASE !== 'true' }, async () => {
   const { createApp } = require('../src/app');
   const { prisma } = require('../src/db');
+  const { tokenHash } = require('../src/lib/security');
   const server = createApp().listen(0);
   await new Promise(resolve => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -28,6 +29,13 @@ test('PostgreSQL account, funding, purchase, and ledger flow', { skip: process.e
     const journals = await prisma.ledgerTransaction.findMany({ include: { postings: true } });
     assert.equal(journals.length, 2);
     for (const journal of journals) assert.equal(journal.postings.reduce((sum, posting) => sum + posting.amountKobo, 0n), 0n);
+    const user = await prisma.user.findUnique({ where: { email } });
+    const rawResetToken = 'integration-reset-token-that-is-long-and-random-0001';
+    await prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: tokenHash(rawResetToken), expiresAt: new Date(Date.now() + 600000) } });
+    await request('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token: rawResetToken, password: 'A-new-strong-password-456' }) });
+    await request('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password: 'A-new-strong-password-456' }) });
+    const usedToken = await prisma.passwordResetToken.findUnique({ where: { tokenHash: tokenHash(rawResetToken) } });
+    assert.ok(usedToken.usedAt);
   } finally {
     await new Promise(resolve => server.close(resolve));
     await prisma.$disconnect();

@@ -13,7 +13,7 @@ COPY prisma ./prisma
 RUN ./node_modules/.bin/prisma generate
 RUN npm prune --omit=dev
 COPY src ./src
-COPY index.html dashboard.html admin.html legal.html style.css scripts.js admin.js ./
+COPY index.html dashboard.html admin.html reset-password.html legal.html style.css scripts.js admin.js ./
 USER paypoint
 EXPOSE 3000
 CMD ["node", "src/server.js"]

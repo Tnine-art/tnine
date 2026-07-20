@@ -34,6 +34,9 @@
     let authMode = 'login';
     const setAuthMode = mode => {
       authMode = mode; const registering = mode === 'register';
+      byId('loginForm').hidden = false;
+      byId('forgotForm').hidden = true;
+      document.querySelector('.auth-tabs').hidden = false;
       document.querySelectorAll('[data-auth-tab]').forEach(tab => tab.classList.toggle('active', tab.dataset.authTab === mode));
       document.querySelector('.name-field').hidden = !registering;
       byId('loginName').required = registering;
@@ -51,7 +54,14 @@
     document.querySelectorAll('[data-open-login]').forEach(el => el.addEventListener('click', open));
     document.querySelectorAll('[data-close-login]').forEach(el => el.addEventListener('click', close));
     document.querySelectorAll('[data-auth-tab]').forEach(tab => tab.addEventListener('click', () => setAuthMode(tab.dataset.authTab)));
-    byId('forgotPassword')?.addEventListener('click', () => toast('Password recovery will be enabled with the email service.', 'success'));
+    byId('forgotPassword')?.addEventListener('click', () => {
+      byId('loginForm').hidden = true; byId('forgotForm').hidden = false; document.querySelector('.auth-tabs').hidden = true;
+      byId('loginTitle').textContent = 'Reset your password';
+      byId('authSubtitle').textContent = 'Enter your email and we will send a secure, time-limited reset link.';
+      byId('forgotForm').elements.email.value = byId('loginForm').elements.email.value;
+      byId('forgotForm').elements.email.focus();
+    });
+    byId('backToLogin')?.addEventListener('click', () => setAuthMode('login'));
     document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
     document.querySelector('.menu-toggle')?.addEventListener('click', event => {
       const nav = document.querySelector('.site-nav'); nav.classList.toggle('open');
@@ -65,11 +75,37 @@
       try { await api(`/auth/${authMode}`, { method: 'POST', body: JSON.stringify(payload) }); window.location.href = 'dashboard.html'; }
       catch (error) { toast(error.message, 'error'); loading(button, false); }
     });
+    byId('forgotForm').addEventListener('submit', async event => {
+      event.preventDefault(); const form = event.currentTarget, button = form.querySelector('[type="submit"]');
+      loading(button, true, 'Sending reset link…');
+      try {
+        const result = await api('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: String(new FormData(form).get('email')).trim() }) });
+        toast(result.message); form.reset(); setAuthMode('login');
+      } catch (error) { toast(error.message, 'error'); }
+      finally { loading(button, false); }
+    });
     api('/config').then(environment => {
       const note = document.querySelector('[data-sandbox-note]');
       if (note && environment.liveMode) note.textContent = 'Secure access — never share your password or payment authorization codes.';
     }).catch(() => {});
     setAuthMode('login');
+  }
+
+  function setupResetPassword() {
+    const page = byId('resetPasswordPage'); if (!page) return;
+    const token = new URLSearchParams(location.search).get('token');
+    const form = byId('resetPasswordForm');
+    if (!token) { form.hidden = true; toast('This reset link is invalid or incomplete.', 'error'); return; }
+    form.addEventListener('submit', async event => {
+      event.preventDefault(); const data = new FormData(form), password = String(data.get('password')), confirmation = String(data.get('confirmPassword')), button = form.querySelector('[type="submit"]');
+      if (password.length < 12) return toast('Use at least 12 characters for your new password.', 'error');
+      if (password !== confirmation) return toast('The passwords do not match.', 'error');
+      loading(button, true, 'Updating password…');
+      try {
+        await api('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) });
+        history.replaceState({}, '', 'reset-password.html'); form.hidden = true; byId('resetSuccess').hidden = false;
+      } catch (error) { toast(error.message, 'error'); loading(button, false); }
+    });
   }
 
   function confirmAction(message, confirmLabel) {
@@ -157,5 +193,5 @@
     catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
   }
 
-  setupLanding(); setupDashboard();
+  setupLanding(); setupDashboard(); setupResetPassword();
 })();

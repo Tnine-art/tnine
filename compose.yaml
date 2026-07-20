@@ -34,6 +34,10 @@ services:
       VTPASS_BASE_URL: ${VTPASS_BASE_URL:-https://sandbox.vtpass.com/api}
       RECONCILIATION_INTERVAL_SECONDS: 60
       RECONCILIATION_MAX_RETRIES: 10
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:?Set EMAIL_PROVIDER}
+      RESEND_API_KEY: ${RESEND_API_KEY:?Set RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM:?Set EMAIL_FROM}
+      PASSWORD_RESET_TTL_MINUTES: 30
     depends_on:
       database:
         condition: service_healthy

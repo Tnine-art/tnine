@@ -9,6 +9,11 @@ async function run() {
     try {
       const results = await reconcilePendingOrders();
       if (results.length) console.log(`Reconciled ${results.length} pending order(s).`);
+      const now = new Date();
+      await prisma.$transaction([
+        prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: now } } }),
+        prisma.session.deleteMany({ where: { expiresAt: { lt: now } } })
+      ]);
     } catch (error) { console.error('Reconciliation cycle failed:', error); }
     await new Promise(resolve => setTimeout(resolve, config.reconciliationIntervalSeconds * 1000));
   }
