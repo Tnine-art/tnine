@@ -38,7 +38,7 @@
 
     <section class="overview" id="overview">
       <article class="dashboard-balance">
-        <div><small>Main balance</small><h2 class="balance-loading" data-balance aria-live="polite" aria-busy="true"><span class="balance-skeleton" aria-label="Loading balance"></span></h2></div>
+        <div><small>Main balance</small><h2 class="balance-loading" data-balance aria-live="polite" aria-busy="true"><span class="balance-skeleton" aria-label="Loading balance"></span></h2><span class="balance-availability"><i></i> Available to spend</span></div>
         <button class="btn wallet-button" type="button" data-service="fund">＋ Fund wallet</button>
         <span class="card-orb orb-one"></span><span class="card-orb orb-two"></span>
         <footer><span>PAYPOINT WALLET</span><span>SECURE NGN WALLET</span></footer>
@@ -167,8 +167,12 @@
     </section>
 
     <section class="transactions" id="transactions">
-      <div class="dashboard-title"><div><h2>Recent transactions</h2><p>Your latest wallet activity.</p></div><span class="secure-label">◆ Secure records</span></div>
-      <div class="transaction-list" id="transactionList"></div>
+      <div class="dashboard-title transaction-title"><div><h2>Recent transactions</h2><p>Search, review and download receipts for your wallet activity.</p></div><span class="secure-label">◆ Secure records</span></div>
+      <div class="transaction-toolbar" aria-label="Transaction filters">
+        <label class="transaction-search"><span aria-hidden="true">⌕</span><span class="sr-only">Search transactions</span><input id="transactionSearch" type="search" placeholder="Search transactions" autocomplete="off"></label>
+        <label class="transaction-filter"><span class="sr-only">Filter transaction type</span><select id="transactionTypeFilter"><option value="ALL">All activity</option><option value="WALLET_FUNDING">Wallet funding</option><option value="AIRTIME">Airtime</option><option value="DATA">Data</option><option value="TRANSFER">Transfers</option><option value="TV">TV subscriptions</option></select></label>
+      </div>
+      <div class="transaction-list" id="transactionList" aria-live="polite"><div class="transaction-loading" aria-label="Loading transactions"><span></span><span></span><span></span></div></div>
     </section>
     <footer class="dashboard-footer"><span>© 2026 PayPoint. All rights reserved.</span><a href="index.html">Back to website</a></footer>
   </main>

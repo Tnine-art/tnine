@@ -6,6 +6,7 @@
   const money = kobo => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(kobo / 100);
   let plans = [];
   let tvPlans = [];
+  let walletTransactions = [];
 
   function setTheme(theme) {
     document.documentElement.dataset.theme = theme;
@@ -192,6 +193,8 @@
       const button = event.target.closest('[data-view-receipt]');
       if (button) openReceipt(button.dataset.viewReceipt, button);
     });
+    byId('transactionSearch')?.addEventListener('input', renderTransactions);
+    byId('transactionTypeFilter')?.addEventListener('change', renderTransactions);
     document.querySelectorAll('[data-close-receipt]').forEach(button => button.addEventListener('click', closeReceipt));
     byId('printReceipt').addEventListener('click', () => { document.body.classList.add('printing-receipt'); window.print(); });
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-receipt'));
@@ -218,8 +221,17 @@
     document.querySelectorAll('[data-balance]').forEach(el => {
       el.classList.remove('balance-loading'); el.textContent = money(balanceKobo); el.setAttribute('aria-busy', 'false');
     });
+    walletTransactions = transactions;
+    renderTransactions();
+  }
+  function renderTransactions() {
     const list = byId('transactionList');
-    if (!transactions.length) { list.innerHTML = '<div class="empty-state"><span>↗</span><h3>No transactions yet</h3><p>Your purchases and wallet funding will appear here.</p></div>'; return; }
+    if (!list) return;
+    const query = (byId('transactionSearch')?.value || '').trim().toLowerCase();
+    const type = byId('transactionTypeFilter')?.value || 'ALL';
+    const transactions = walletTransactions.filter(tx => (type === 'ALL' || tx.type === type) && (!query || `${tx.description} ${tx.reference} ${tx.status} ${tx.type}`.toLowerCase().includes(query)));
+    if (!walletTransactions.length) { list.innerHTML = '<div class="empty-state"><span>↗</span><h3>No transactions yet</h3><p>Your purchases and wallet funding will appear here.</p></div>'; return; }
+    if (!transactions.length) { list.innerHTML = '<div class="empty-state filtered-empty"><span>⌕</span><h3>No matching transactions</h3><p>Try a different search or choose another activity type.</p></div>'; return; }
     const kind = { WALLET_FUNDING: ['wallet', '+'], AIRTIME: ['mtn', 'A'], DATA: ['glo', 'D'], TRANSFER: ['wallet', '⇄'], TV: ['airtel', 'TV'], REFUND: ['wallet', '↩'], ADJUSTMENT: ['wallet', '±'] };
     list.innerHTML = transactions.map(tx => {
       const style = kind[tx.type] || ['wallet', '•'], positive = tx.amountKobo > 0;
