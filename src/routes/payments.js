@@ -37,7 +37,7 @@ router.post('/initialize', authenticate, asyncRoute(async (req, res) => {
 }));
 
 router.get('/mock-checkout', asyncRoute(async (req, res) => {
-  if (config.paymentProvider !== 'mock' || config.env === 'production') throw new ApiError(404, 'NOT_FOUND', 'Not found.');
+  if (config.paymentProvider !== 'mock' || (config.env === 'production' && config.deploymentStage !== 'sandbox')) throw new ApiError(404, 'NOT_FOUND', 'Not found.');
   const payment = await completePayment(String(req.query.reference || ''), String(req.query.reference || ''));
   res.redirect(`/dashboard.html?payment=successful&reference=${encodeURIComponent(payment.reference)}`);
 }));

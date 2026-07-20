@@ -3,9 +3,10 @@ require('dotenv').config({ path: path.join(process.cwd(), '.env') });
 
 const config = {
   env: process.env.NODE_ENV || 'development',
+  deploymentStage: process.env.DEPLOYMENT_STAGE || 'local',
   liveMode: process.env.LIVE_MODE === 'true',
   port: Number(process.env.PORT || 3000),
-  appUrl: process.env.APP_URL || 'http://localhost:3000',
+  appUrl: process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000',
   cookieName: process.env.SESSION_COOKIE_NAME || 'paypoint_session',
   sessionTtlDays: Number(process.env.SESSION_TTL_DAYS || 7),
   paymentProvider: process.env.PAYMENT_PROVIDER || 'mock',
@@ -24,10 +25,13 @@ const config = {
   passwordResetTtlMinutes: Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30)
 };
 
-if (config.env === 'production' && (config.paymentProvider === 'mock' || config.vtuProvider === 'mock')) {
+if (!['local', 'sandbox', 'live'].includes(config.deploymentStage)) throw new Error('DEPLOYMENT_STAGE must be local, sandbox, or live.');
+if (config.liveMode && config.deploymentStage !== 'live') throw new Error('LIVE_MODE requires DEPLOYMENT_STAGE=live.');
+if (!config.liveMode && config.deploymentStage === 'live') throw new Error('DEPLOYMENT_STAGE=live requires LIVE_MODE=true.');
+if (config.env === 'production' && config.deploymentStage !== 'sandbox' && (config.paymentProvider === 'mock' || config.vtuProvider === 'mock')) {
   throw new Error('Mock providers cannot be used in production.');
 }
-if (config.env === 'production' && (config.emailProvider !== 'resend' || !config.resendApiKey)) {
+if (config.env === 'production' && config.deploymentStage !== 'sandbox' && (config.emailProvider !== 'resend' || !config.resendApiKey)) {
   throw new Error('Production requires configured email delivery.');
 }
 if (config.liveMode) {

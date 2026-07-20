@@ -31,6 +31,17 @@ The public site uses separate `/login.html` and `/register.html` pages. While `L
 
 The mock checkout exists only outside production and never charges real money.
 
+## Hosted sandbox deployment
+
+The included `render.yaml` creates a sandbox web service and private PostgreSQL database. It runs the application with production HTTP security while `DEPLOYMENT_STAGE=sandbox` and `LIVE_MODE=false` keep payment and VTU activity mocked.
+
+1. Sign in to Render with the GitHub account that can access this repository.
+2. Choose **New → Blueprint** and select `Tnine-art/tnine`.
+3. Confirm the resources described by `render.yaml` and start the deployment.
+4. When the health check passes, open the generated `onrender.com` URL and create an account at `/register.html`.
+
+Render supplies the public HTTPS URL and database connection automatically. Do not change `DEPLOYMENT_STAGE` to `live` or `LIVE_MODE` to `true` for the demo deployment.
+
 ## Container deployment
 
 `compose.yaml` defines PostgreSQL, a one-time migration service, the API, and the reconciliation worker. Create a deployment `.env` containing at least:
