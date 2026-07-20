@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0757e6">
+  <meta name="description" content="Create a secure PayPoint account."><title>Create account — PayPoint</title><link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page" id="registerPage">
+  <main class="auth-shell">
+    <a class="brand" href="index.html" aria-label="PayPoint home"><span class="brand-mark">P</span><span>Pay<span>Point</span></span></a>
+    <section class="auth-card">
+      <div class="environment-banner" data-environment-banner><span></span><div><strong data-environment-title>Demo account</strong><small data-environment-copy>Create a personal sandbox account. No real payment will be made.</small></div></div>
+      <span class="auth-kicker">GET STARTED</span><h1>Create your account</h1><p data-register-subtitle>Set up your demo account and explore PayPoint safely.</p>
+      <form id="pageRegisterForm">
+        <label>Full name<input name="name" type="text" autocomplete="name" placeholder="Ada Okafor" minlength="2" maxlength="80" required></label>
+        <label>Email address<input name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="254" required></label>
+        <label>Password<input name="password" type="password" autocomplete="new-password" placeholder="At least 12 characters" minlength="12" maxlength="128" required></label>
+        <label>Confirm password<input name="confirmPassword" type="password" autocomplete="new-password" placeholder="Repeat your password" minlength="12" maxlength="128" required></label>
+        <p class="password-guidance">Use at least 12 characters. A mix of words, numbers, and symbols is recommended.</p>
+        <label class="terms-check"><input name="terms" type="checkbox" required><span>I agree to the <a href="legal.html#terms">Terms</a> and acknowledge the <a href="legal.html#privacy">Privacy Notice</a>.</span></label>
+        <button class="btn btn-primary btn-block" type="submit">Create demo account →</button>
+      </form>
+      <div class="auth-divider"><span>Already have an account?</span></div>
+      <a class="btn btn-secondary btn-block" href="login.html">Log in instead</a>
+    </section>
+    <p class="auth-footer">Your password is securely hashed and never stored as plain text.</p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script src="scripts.js"></script>
+</body></html>

@@ -10,7 +10,11 @@ const { sendPasswordResetEmail, sendPasswordChangedEmail } = require('../service
 
 const router = express.Router();
 const credentials = z.object({ email: z.email().transform(value => value.trim().toLowerCase()), password: z.string().min(8).max(128) });
-const registerSchema = credentials.extend({ name: z.string().trim().min(2).max(80) });
+const registerSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  email: z.email().transform(value => value.trim().toLowerCase()),
+  password: z.string().min(12).max(128)
+});
 const forgotSchema = z.object({ email: z.email().transform(value => value.trim().toLowerCase()) });
 const resetSchema = z.object({ token: z.string().min(32).max(256), password: z.string().min(12).max(128) });
 const resetLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: 'draft-8', legacyHeaders: false });

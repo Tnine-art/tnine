@@ -35,7 +35,7 @@ function createApp() {
     res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
   }));
 
-  for (const file of ['index.html', 'dashboard.html', 'admin.html', 'reset-password.html', 'legal.html', 'style.css', 'scripts.js', 'admin.js']) {
+  for (const file of ['index.html', 'login.html', 'register.html', 'dashboard.html', 'admin.html', 'reset-password.html', 'legal.html', 'style.css', 'scripts.js', 'admin.js']) {
     app.get(file === 'index.html' ? ['/', '/index.html'] : `/${file}`, (_req, res) => res.sendFile(path.join(process.cwd(), file)));
   }
   app.use('/api', (_req, _res, next) => next(new ApiError(404, 'NOT_FOUND', 'API endpoint not found.')));

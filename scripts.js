@@ -30,65 +30,72 @@
   }
 
   function setupLanding() {
-    const modal = byId('loginModal'); if (!modal) return;
-    let authMode = 'login';
-    const setAuthMode = mode => {
-      authMode = mode; const registering = mode === 'register';
-      byId('loginForm').hidden = false;
-      byId('forgotForm').hidden = true;
-      document.querySelector('.auth-tabs').hidden = false;
-      document.querySelectorAll('[data-auth-tab]').forEach(tab => tab.classList.toggle('active', tab.dataset.authTab === mode));
-      document.querySelector('.name-field').hidden = !registering;
-      byId('loginName').required = registering;
-      document.querySelector('[name="password"]').autocomplete = registering ? 'new-password' : 'current-password';
-      byId('loginTitle').textContent = registering ? 'Create your PayPoint account' : 'Welcome back';
-      byId('authSubtitle').textContent = registering ? 'Set up your secure account to get started.' : 'Log in to continue to your dashboard.';
-      document.querySelector('[data-auth-submit]').textContent = registering ? 'Create account →' : 'Log in securely →';
-    };
-    const close = () => { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); };
-    const open = event => {
-      event?.preventDefault(); setAuthMode(event?.currentTarget?.dataset.authMode || 'login');
-      modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
-      setTimeout(() => (authMode === 'register' ? byId('loginName') : modal.querySelector('[name="email"]'))?.focus(), 100);
-    };
-    document.querySelectorAll('[data-open-login]').forEach(el => el.addEventListener('click', open));
-    document.querySelectorAll('[data-close-login]').forEach(el => el.addEventListener('click', close));
-    document.querySelectorAll('[data-auth-tab]').forEach(tab => tab.addEventListener('click', () => setAuthMode(tab.dataset.authTab)));
-    byId('forgotPassword')?.addEventListener('click', () => {
-      byId('loginForm').hidden = true; byId('forgotForm').hidden = false; document.querySelector('.auth-tabs').hidden = true;
-      byId('loginTitle').textContent = 'Reset your password';
-      byId('authSubtitle').textContent = 'Enter your email and we will send a secure, time-limited reset link.';
-      byId('forgotForm').elements.email.value = byId('loginForm').elements.email.value;
-      byId('forgotForm').elements.email.focus();
-    });
-    byId('backToLogin')?.addEventListener('click', () => setAuthMode('login'));
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+    if (!document.body.classList.contains('landing-page')) return;
     document.querySelector('.menu-toggle')?.addEventListener('click', event => {
       const nav = document.querySelector('.site-nav'); nav.classList.toggle('open');
       event.currentTarget.setAttribute('aria-expanded', String(nav.classList.contains('open')));
     });
-    byId('loginForm').addEventListener('submit', async event => {
-      event.preventDefault(); const data = new FormData(event.currentTarget), button = event.currentTarget.querySelector('[type="submit"]');
-      const payload = { email: String(data.get('email')).trim(), password: String(data.get('password')) };
-      if (authMode === 'register') payload.name = String(data.get('name')).trim();
-      loading(button, true, authMode === 'register' ? 'Creating account…' : 'Signing in…');
-      try { await api(`/auth/${authMode}`, { method: 'POST', body: JSON.stringify(payload) }); window.location.href = 'dashboard.html'; }
-      catch (error) { toast(error.message, 'error'); loading(button, false); }
+  }
+
+  function applyAuthEnvironment(environment) {
+    if (!environment.liveMode) return;
+    document.querySelector('[data-environment-banner]')?.classList.add('live');
+    const title = document.querySelector('[data-environment-title]');
+    const copy = document.querySelector('[data-environment-copy]');
+    if (title) title.textContent = 'Secure account access';
+    if (copy) copy.textContent = 'You are accessing the live PayPoint service. Keep your password and authorization codes private.';
+    const loginSubtitle = document.querySelector('[data-login-subtitle]');
+    if (loginSubtitle) loginSubtitle.textContent = 'Log in securely to continue to your PayPoint dashboard.';
+    const registerSubtitle = document.querySelector('[data-register-subtitle]');
+    if (registerSubtitle) registerSubtitle.textContent = 'Create your secure PayPoint account to get started.';
+    const createLink = document.querySelector('[data-create-link]');
+    if (createLink) createLink.textContent = 'Create an account';
+    const registerButton = byId('pageRegisterForm')?.querySelector('[type="submit"]');
+    if (registerButton) registerButton.textContent = 'Create account →';
+  }
+
+  function setupLoginPage() {
+    const form = byId('pageLoginForm'); if (!form) return;
+    const loginView = byId('loginView'), forgotView = byId('forgotView'), forgotForm = byId('pageForgotForm');
+    const showLogin = () => { forgotView.hidden = true; loginView.hidden = false; form.elements.email.focus(); };
+    byId('showForgotPassword').addEventListener('click', () => {
+      loginView.hidden = true; forgotView.hidden = false;
+      forgotForm.elements.email.value = form.elements.email.value; forgotForm.elements.email.focus();
     });
-    byId('forgotForm').addEventListener('submit', async event => {
-      event.preventDefault(); const form = event.currentTarget, button = form.querySelector('[type="submit"]');
+    byId('hideForgotPassword').addEventListener('click', showLogin);
+    form.addEventListener('submit', async event => {
+      event.preventDefault(); const data = new FormData(form), button = form.querySelector('[type="submit"]');
+      loading(button, true, 'Signing in…');
+      try {
+        await api('/auth/login', { method: 'POST', body: JSON.stringify({ email: String(data.get('email')).trim(), password: String(data.get('password')) }) });
+        window.location.href = 'dashboard.html';
+      } catch (error) { toast(error.message, 'error'); loading(button, false); }
+    });
+    forgotForm.addEventListener('submit', async event => {
+      event.preventDefault(); const button = forgotForm.querySelector('[type="submit"]');
       loading(button, true, 'Sending reset link…');
       try {
-        const result = await api('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: String(new FormData(form).get('email')).trim() }) });
-        toast(result.message); form.reset(); setAuthMode('login');
+        const result = await api('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: String(new FormData(forgotForm).get('email')).trim() }) });
+        toast(result.message); forgotForm.reset(); showLogin();
       } catch (error) { toast(error.message, 'error'); }
       finally { loading(button, false); }
     });
-    api('/config').then(environment => {
-      const note = document.querySelector('[data-sandbox-note]');
-      if (note && environment.liveMode) note.textContent = 'Secure access — never share your password or payment authorization codes.';
-    }).catch(() => {});
-    setAuthMode('login');
+    api('/config').then(applyAuthEnvironment).catch(() => {});
+  }
+
+  function setupRegisterPage() {
+    const form = byId('pageRegisterForm'); if (!form) return;
+    form.addEventListener('submit', async event => {
+      event.preventDefault(); const data = new FormData(form), password = String(data.get('password')), button = form.querySelector('[type="submit"]');
+      if (password.length < 12) return toast('Use at least 12 characters for your password.', 'error');
+      if (password !== String(data.get('confirmPassword'))) return toast('The passwords do not match.', 'error');
+      loading(button, true, 'Creating your account…');
+      try {
+        await api('/auth/register', { method: 'POST', body: JSON.stringify({ name: String(data.get('name')).trim(), email: String(data.get('email')).trim(), password }) });
+        window.location.href = 'dashboard.html';
+      } catch (error) { toast(error.message, 'error'); loading(button, false); }
+    });
+    api('/config').then(applyAuthEnvironment).catch(() => {});
   }
 
   function setupResetPassword() {
@@ -129,7 +136,7 @@
       });
       plans = catalog.plans; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans();
     } catch (error) {
-      if (error.status === 401) return window.location.replace('index.html');
+      if (error.status === 401) return window.location.replace('login.html');
       toast(error.message, 'error');
     }
     const params = new URLSearchParams(location.search);
@@ -193,5 +200,5 @@
     catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
   }
 
-  setupLanding(); setupDashboard(); setupResetPassword();
+  setupLanding(); setupLoginPage(); setupRegisterPage(); setupDashboard(); setupResetPassword();
 })();

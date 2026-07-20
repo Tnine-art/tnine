@@ -27,6 +27,8 @@ Requirements: Node.js 22+, PostgreSQL, and npm.
 6. In another terminal, run `npm run worker`.
 7. Open `http://localhost:3000`.
 
+The public site uses separate `/login.html` and `/register.html` pages. While `LIVE_MODE=false`, both pages clearly identify the account as a sandbox/demo account and all provider activity remains non-live. The same pages automatically switch to production wording only after the guarded live configuration is enabled.
+
 The mock checkout exists only outside production and never charges real money.
 
 ## Container deployment

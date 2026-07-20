@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0757e6">
+  <meta name="description" content="Log in securely to your PayPoint account."><title>Log in — PayPoint</title><link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page" id="loginPage">
+  <main class="auth-shell">
+    <a class="brand" href="index.html" aria-label="PayPoint home"><span class="brand-mark">P</span><span>Pay<span>Point</span></span></a>
+    <section class="auth-card">
+      <div class="environment-banner" data-environment-banner><span></span><div><strong data-environment-title>Demo login</strong><small data-environment-copy>Use an account you created in this sandbox. No real payment will be made.</small></div></div>
+      <div id="loginView">
+        <span class="auth-kicker">SECURE ACCESS</span><h1>Welcome back</h1><p data-login-subtitle>Log in to explore your PayPoint demo dashboard.</p>
+        <form id="pageLoginForm">
+          <label>Email address<input name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="254" required></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" placeholder="Enter your password" minlength="8" maxlength="128" required></label>
+          <div class="auth-row"><span></span><button class="link-button" type="button" id="showForgotPassword">Forgot password?</button></div>
+          <button class="btn btn-primary btn-block" type="submit">Log in securely →</button>
+        </form>
+        <div class="auth-divider"><span>New to PayPoint?</span></div>
+        <a class="btn btn-secondary btn-block" href="register.html" data-create-link>Create a demo account</a>
+      </div>
+      <div id="forgotView" hidden>
+        <span class="auth-kicker">ACCOUNT RECOVERY</span><h1>Reset your password</h1><p>Enter your account email and we will send a secure, time-limited reset link.</p>
+        <form id="pageForgotForm">
+          <label>Email address<input name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="254" required></label>
+          <button class="btn btn-primary btn-block" type="submit">Send reset link →</button>
+        </form>
+        <button class="back-to-login" type="button" id="hideForgotPassword">← Back to login</button>
+      </div>
+    </section>
+    <p class="auth-footer">Protected by secure sessions · <a href="legal.html#privacy">Privacy</a> · <a href="legal.html#contact">Support</a></p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script src="scripts.js"></script>
+</body></html>
