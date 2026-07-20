@@ -1,12 +1,15 @@
 const path = require('node:path');
 require('dotenv').config({ path: path.join(process.cwd(), '.env') });
 
+const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+const hostedAppUrl = process.env.RENDER_EXTERNAL_URL || (vercelHost ? `https://${vercelHost}` : '');
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   deploymentStage: process.env.DEPLOYMENT_STAGE || 'local',
   liveMode: process.env.LIVE_MODE === 'true',
   port: Number(process.env.PORT || 3000),
-  appUrl: process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000',
+  appUrl: process.env.APP_URL || hostedAppUrl || 'http://localhost:3000',
   cookieName: process.env.SESSION_COOKIE_NAME || 'paypoint_session',
   sessionTtlDays: Number(process.env.SESSION_TTL_DAYS || 7),
   paymentProvider: process.env.PAYMENT_PROVIDER || 'mock',

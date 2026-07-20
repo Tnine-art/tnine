@@ -2,6 +2,21 @@
 
 PayPoint is a full-stack digital payments platform for wallet transfers, airtime, data, and TV subscriptions, with a responsive customer experience, secure Express API, PostgreSQL ledger, payment and VTU provider adapters, a restricted operations dashboard, and a pending-order reconciliation worker.
 
+## Vercel deployment
+
+The repository includes `api/index.js` and `vercel.json` for a GitHub-connected Vercel deployment. Configure these server-only environment variables in Vercel for Production before deploying:
+
+- `DATABASE_URL`
+- `NODE_ENV=production`
+- `DEPLOYMENT_STAGE=sandbox`
+- `LIVE_MODE=false`
+- `SESSION_COOKIE_NAME=paypoint_session`
+- `PAYMENT_PROVIDER=mock`
+- `VTU_PROVIDER=mock`
+- `EMAIL_PROVIDER=console`
+
+Set `APP_URL` to the final Vercel production URL after the first deployment, then redeploy. For live mode, replace the sandbox values with the approved Paystack, VTpass, and email provider configuration described below. Apply database migrations separately with `npx prisma migrate deploy`; deployment builds only generate Prisma Client and never mutate the database schema automatically.
+
 ## Current operating state
 
 The application is production-structured but intentionally starts with `LIVE_MODE=false`. That state uses test provider credentials and must remain active until Paystack, VTpass, compliance, support, monitoring, and reconciliation checks have been approved.
