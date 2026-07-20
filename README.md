@@ -15,7 +15,7 @@ The repository includes `api/index.js` and `vercel.json` for a GitHub-connected 
 - `VTU_PROVIDER=mock`
 - `EMAIL_PROVIDER=console`
 
-Set `APP_URL` to the final Vercel production URL after the first deployment, then redeploy. For live mode, replace the sandbox values with the approved Paystack, VTpass, and email provider configuration described below. Apply database migrations separately with `npx prisma migrate deploy`; deployment builds only generate Prisma Client and never mutate the database schema automatically.
+Set `APP_URL` to the final Vercel production URL after the first deployment, then redeploy. For live mode, replace the sandbox values with the approved Paystack, VTpass, and email provider configuration described below. The Vercel service build runs `prisma migrate deploy` against committed migrations before publishing the new deployment.
 
 ## Current operating state
 
