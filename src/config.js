@@ -20,6 +20,7 @@ const config = {
   vtpassPublicKey: process.env.VTPASS_PUBLIC_KEY || '',
   vtpassSecretKey: process.env.VTPASS_SECRET_KEY || '',
   vtpassBaseUrl: process.env.VTPASS_BASE_URL || 'https://sandbox.vtpass.com/api',
+  vtpassCatalogBaseUrl: process.env.VTPASS_CATALOG_BASE_URL || ((process.env.VTU_PROVIDER || 'mock') === 'mock' ? 'https://vtpass.com/api' : (process.env.VTPASS_BASE_URL || 'https://sandbox.vtpass.com/api')),
   reconciliationIntervalSeconds: Number(process.env.RECONCILIATION_INTERVAL_SECONDS || 60),
   reconciliationMaxRetries: Number(process.env.RECONCILIATION_MAX_RETRIES || 10),
   emailProvider: process.env.EMAIL_PROVIDER || 'console',

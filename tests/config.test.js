@@ -43,6 +43,12 @@ test('hosted sandbox permits mock providers without enabling live mode', () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+test('sandbox mock fulfillment uses the live public VTpass catalog', () => {
+  const result = spawnSync(process.execPath, ['-e', "console.log(require('./src/config').config.vtpassCatalogBaseUrl)"], { cwd: process.cwd(), env: { ...base, DEPLOYMENT_STAGE: 'sandbox', LIVE_MODE: 'false', VTU_PROVIDER: 'mock' }, encoding: 'utf8' });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /https:\/\/vtpass\.com\/api/);
+});
+
 test('live mode cannot be mislabeled as a sandbox', () => {
   const result = spawnSync(process.execPath, ['-e', "require('./src/config')"], { cwd: process.cwd(), env: { ...base, DEPLOYMENT_STAGE: 'sandbox' }, encoding: 'utf8' });
   assert.notEqual(result.status, 0);

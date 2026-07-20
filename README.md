@@ -15,6 +15,8 @@ The repository includes `api/index.js` and `vercel.json` for a GitHub-connected 
 - `VTU_PROVIDER=mock`
 - `EMAIL_PROVIDER=console`
 
+In sandbox, PayPoint reads package names, variation codes, and prices from VTpass's public live catalog while fulfillment remains mocked, so users can evaluate current plans without a real charge. Set `VTPASS_CATALOG_BASE_URL` only when a separate approved catalog endpoint is required.
+
 Set `APP_URL` to the final Vercel production URL after the first deployment, then redeploy. For live mode, replace the sandbox values with the approved Paystack, VTpass, and email provider configuration described below. The Vercel service build runs `prisma migrate deploy` against committed migrations before publishing the new deployment.
 
 ## Current operating state

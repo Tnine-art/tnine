@@ -61,7 +61,7 @@ function normalizeVariations(service, body) {
 }
 
 async function discoverTvServices() {
-  const url = new URL(`${config.vtpassBaseUrl}/services`);
+  const url = new URL(`${config.vtpassCatalogBaseUrl}/services`);
   url.searchParams.set('identifier', 'tv-subscription');
   const body = await fetchProviderJson(url, 'VTpass service directory');
   if (!Array.isArray(body.content) || !body.content.length) throw new Error('VTpass returned no TV services.');
@@ -92,7 +92,7 @@ async function fetchService(service) {
   const headers = {};
   if (config.vtpassApiKey) headers['api-key'] = config.vtpassApiKey;
   if (config.vtpassPublicKey) headers['public-key'] = config.vtpassPublicKey;
-  const url = new URL(`${config.vtpassBaseUrl}/service-variations`);
+  const url = new URL(`${config.vtpassCatalogBaseUrl}/service-variations`);
   url.searchParams.set('serviceID', service.serviceId);
   let lastError;
   for (let attempt = 1; attempt <= MAX_REQUEST_ATTEMPTS; attempt += 1) {
