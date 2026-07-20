@@ -74,6 +74,11 @@
 
   function setupLoginPage() {
     const form = byId('pageLoginForm'); if (!form) return;
+    const pageParams = new URLSearchParams(location.search);
+    if (pageParams.get('signedOut') === 'true') {
+      history.replaceState({}, '', 'login.html');
+      setTimeout(() => toast('You have been signed out securely.'), 50);
+    }
     const loginView = byId('loginView'), forgotView = byId('forgotView'), forgotForm = byId('pageForgotForm');
     const showLogin = () => { forgotView.hidden = true; loginView.hidden = false; form.elements.email.focus(); };
     byId('showForgotPassword').addEventListener('click', () => {
@@ -133,10 +138,14 @@
     });
   }
 
-  function confirmAction(message, confirmLabel) {
+  function confirmAction(message, confirmLabel, options = {}) {
     return new Promise(resolve => {
-      const modal = byId('confirmModal'), approve = byId('approveConfirm'), cancel = byId('cancelConfirm');
+      const modal = byId('confirmModal'), approve = byId('approveConfirm'), cancel = byId('cancelConfirm'), icon = modal.querySelector('.confirm-icon');
+      byId('confirmTitle').textContent = options.title || 'Confirm transaction';
       byId('confirmMessage').textContent = message; approve.textContent = confirmLabel;
+      approve.classList.toggle('btn-danger', options.danger === true);
+      approve.classList.toggle('btn-primary', options.danger !== true);
+      icon.textContent = options.danger ? '↪' : '✓'; icon.classList.toggle('danger', options.danger === true);
       modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); approve.focus();
       const close = result => { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); approve.onclick = null; cancel.onclick = null; resolve(result); };
       cancel.onclick = () => close(false); modal.querySelector('.confirm-backdrop').onclick = () => close(false); approve.onclick = () => close(true);
@@ -152,7 +161,7 @@
         el.textContent = environment.liveMode ? 'LIVE SERVICE' : (el.textContent.includes('NO CHARGE') ? 'SANDBOX — NO CHARGE' : 'SANDBOX MODE');
         el.classList.toggle('live', environment.liveMode);
       });
-      plans = catalog.plans; tvPlans = catalog.tvPlans || []; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans();
+      plans = catalog.plans; tvPlans = catalog.tvPlans || []; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans(catalog);
       loadVirtualAccount(environment).catch(error => {
         const number = document.querySelector('[data-virtual-account-number]');
         if (number) number.textContent = 'Unavailable';
@@ -219,11 +228,18 @@
   }
   const escapeHtml = value => String(value).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
   async function refreshWallet() { const [wallet, history] = await Promise.all([api('/wallet'), api('/wallet/transactions')]); renderWallet(wallet.balanceKobo, history.transactions); }
-  function renderPlans() {
+  function renderPlans(catalog) {
     const select = byId('dataForm').elements.plan;
     select.innerHTML = '<option value="">Choose a plan</option>' + plans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.network)} ${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
     const tvSelect = byId('tvForm')?.elements.plan;
     if (tvSelect) tvSelect.innerHTML = '<option value="">Choose a TV package</option>' + tvPlans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
+    const providerCatalog = catalog?.source === 'vtpass';
+    document.querySelectorAll('[data-catalog-status]').forEach(element => {
+      element.textContent = providerCatalog
+        ? `Live provider catalog · refreshed ${new Date(catalog.refreshedAt).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}`
+        : 'Demo fallback catalog · no real charge';
+      element.classList.toggle('live', providerCatalog);
+    });
   }
   async function loadVirtualAccount(environment) {
     const { virtualAccount } = await api('/wallet/virtual-account');
@@ -258,7 +274,24 @@
     const sheet = byId('mobileMoreSheet'); if (!sheet) return;
     sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); byId('openMobileMore')?.setAttribute('aria-expanded', 'false'); document.body.classList.remove('mobile-sheet-open');
   }
-  async function logout() { try { await api('/auth/logout', { method: 'POST' }); } finally { window.location.href = 'index.html'; } }
+  let logoutInProgress = false;
+  async function logout(event) {
+    if (logoutInProgress) return;
+    closeMobileMore();
+    const confirmed = await confirmAction('Are you sure you want to end your PayPoint session on this device?', 'Log out securely', { title: 'Log out of PayPoint?', danger: true });
+    if (!confirmed) return;
+    logoutInProgress = true;
+    const buttons = [byId('logoutButton'), byId('mobileLogoutButton')];
+    buttons.forEach(button => loading(button, true, 'Signing out…'));
+    try {
+      await api('/auth/logout', { method: 'POST' });
+      window.location.replace('login.html?signedOut=true');
+    } catch (error) {
+      logoutInProgress = false;
+      buttons.forEach(button => loading(button, false));
+      toast(error.message || 'We could not sign you out. Please try again.', 'error');
+    }
+  }
   async function fundWallet(event) {
     event.preventDefault(); const form = event.currentTarget, amountKobo = Math.round(Number(new FormData(form).get('amount')) * 100), button = form.querySelector('[type="submit"]');
     if (!(await confirmAction(`Fund your wallet with ${money(amountKobo)}?`, 'Continue to payment'))) return;

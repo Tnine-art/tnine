@@ -94,8 +94,9 @@ router.post('/reset-password', resetLimiter, asyncRoute(async (req, res) => {
 
 router.post('/logout', asyncRoute(async (req, res) => {
   const token = parseCookies(req.headers.cookie)[config.cookieName];
+  res.clearCookie(config.cookieName, { path: '/' });
   if (token) await prisma.session.deleteMany({ where: { tokenHash: tokenHash(token) } });
-  res.clearCookie(config.cookieName, { path: '/' }); res.status(204).end();
+  res.status(204).end();
 }));
 
 router.get('/me', authenticate, (req, res) => res.json({ user: { id: req.user.id, name: req.user.name, email: req.user.email, phone: req.user.phone, role: req.user.role, createdAt: req.user.createdAt } }));
