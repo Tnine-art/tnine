@@ -15,6 +15,18 @@
       "root": ".",
       "entrypoint": "api/index.js",
       "framework": "express",
+      "includeFiles": [
+        "index.html",
+        "login.html",
+        "register.html",
+        "dashboard.html",
+        "admin.html",
+        "reset-password.html",
+        "legal.html",
+        "style.css",
+        "scripts.js",
+        "admin.js"
+      ],
       "buildCommand": "npm ci && npm run db:generate && npm run db:deploy"
     }
   }
