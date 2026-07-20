@@ -1,9 +1,26 @@
 (function () {
   'use strict';
+  const storedTheme = (() => { try { return localStorage.getItem('paypoint-theme'); } catch (_error) { return null; } })();
+  if (storedTheme === 'dark' || (!storedTheme && window.matchMedia?.('(prefers-color-scheme: dark)').matches)) document.documentElement.dataset.theme = 'dark';
   const byId = id => document.getElementById(id);
   const money = kobo => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(kobo / 100);
   let plans = [];
   let tvPlans = [];
+
+  function setTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('paypoint-theme', theme); } catch (_error) {}
+    const dark = theme === 'dark';
+    [byId('themeToggle'), byId('appearanceToggle')].filter(Boolean).forEach(button => button.setAttribute('aria-pressed', String(dark)));
+    if (byId('themeToggle')) { byId('themeToggle').innerHTML = `<span aria-hidden="true">${dark ? '☀' : '☾'}</span>`; byId('themeToggle').setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} mode`); }
+    if (byId('appearanceToggle')) {
+      byId('appearanceToggle').classList.toggle('active', dark);
+      byId('appearanceToggle').querySelector('span').textContent = dark ? '☀' : '☾';
+      byId('appearanceToggle').querySelector('strong').textContent = dark ? 'Light mode' : 'Dark mode';
+      byId('appearanceToggle').querySelector('small').textContent = dark ? 'Use a brighter dashboard appearance' : 'Use a darker dashboard appearance';
+    }
+  }
+  const toggleTheme = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 
   async function api(path, options = {}) {
     const response = await fetch(`/api${path}`, {
@@ -155,6 +172,11 @@
     byId('dataForm').addEventListener('submit', buyData);
     byId('transferForm').addEventListener('submit', sendMoney);
     byId('tvForm').addEventListener('submit', buyTv);
+    byId('profileForm').addEventListener('submit', updateProfile);
+    byId('changePasswordForm').addEventListener('submit', changePassword);
+    byId('themeToggle').addEventListener('click', toggleTheme);
+    byId('appearanceToggle').addEventListener('click', toggleTheme);
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
     byId('logoutButton').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST' }); } finally { window.location.href = 'index.html'; } });
   }
   function renderUser(user) {
@@ -162,6 +184,10 @@
     document.querySelectorAll('[data-first-name]').forEach(el => { el.textContent = firstName; });
     document.querySelectorAll('[data-user-name]').forEach(el => { el.textContent = user.name; });
     document.querySelectorAll('[data-initials]').forEach(el => { el.textContent = user.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase(); });
+    document.querySelectorAll('[data-profile-email]').forEach(el => { el.textContent = user.email; });
+    document.querySelectorAll('[data-member-since]').forEach(el => { el.textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'PayPoint member'; });
+    const form = byId('profileForm');
+    if (form) { form.elements.name.value = user.name; form.elements.phone.value = user.phone || ''; form.elements.email.value = user.email; }
   }
   function renderWallet(balanceKobo, transactions) {
     document.querySelectorAll('[data-balance]').forEach(el => {
@@ -249,6 +275,24 @@
     try {
       await api('/services/tv', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ planCode: plan.code, smartcardNumber, phone }) });
       form.reset(); toast('TV subscription completed successfully.'); await refreshWallet();
+    } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
+  }
+  async function updateProfile(event) {
+    event.preventDefault(); const form = event.currentTarget, data = new FormData(form), button = form.querySelector('[type="submit"]');
+    loading(button, true, 'Saving changes…');
+    try {
+      const { user } = await api('/auth/profile', { method: 'PATCH', body: JSON.stringify({ name: String(data.get('name')).trim(), phone: String(data.get('phone')).replace(/\s/g, '') }) });
+      renderUser(user); toast('Your personal details have been updated.');
+    } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
+  }
+  async function changePassword(event) {
+    event.preventDefault(); const form = event.currentTarget, data = new FormData(form), newPassword = String(data.get('newPassword')), button = form.querySelector('[type="submit"]');
+    if (newPassword !== String(data.get('confirmPassword'))) return toast('The new passwords do not match.', 'error');
+    if (newPassword.length < 12) return toast('Use at least 12 characters for your new password.', 'error');
+    loading(button, true, 'Updating password…');
+    try {
+      await api('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword: String(data.get('currentPassword')), newPassword }) });
+      form.reset(); toast('Password updated. Your other sessions have been signed out.');
     } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
   }
 

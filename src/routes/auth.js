@@ -17,6 +17,11 @@ const registerSchema = z.object({
 });
 const forgotSchema = z.object({ email: z.email().transform(value => value.trim().toLowerCase()) });
 const resetSchema = z.object({ token: z.string().min(32).max(256), password: z.string().min(12).max(128) });
+const profileSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  phone: z.union([z.string().trim().regex(/^0[789][01]\d{8}$/, 'Enter a valid Nigerian phone number.'), z.literal('')]).optional()
+});
+const changePasswordSchema = z.object({ currentPassword: z.string().min(8).max(128), newPassword: z.string().min(12).max(128) });
 const resetLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: 'draft-8', legacyHeaders: false });
 
 function setSessionCookie(res, token) {
@@ -93,5 +98,33 @@ router.post('/logout', asyncRoute(async (req, res) => {
   res.clearCookie(config.cookieName, { path: '/' }); res.status(204).end();
 }));
 
-router.get('/me', authenticate, (req, res) => res.json({ user: { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role } }));
+router.get('/me', authenticate, (req, res) => res.json({ user: { id: req.user.id, name: req.user.name, email: req.user.email, phone: req.user.phone, role: req.user.role, createdAt: req.user.createdAt } }));
+router.patch('/profile', authenticate, asyncRoute(async (req, res) => {
+  const data = profileSchema.parse(req.body), phone = data.phone || null;
+  if (phone) {
+    const owner = await prisma.user.findUnique({ where: { phone } });
+    if (owner && owner.id !== req.user.id) throw new ApiError(409, 'PHONE_EXISTS', 'This phone number is already linked to another account.');
+  }
+  const user = await prisma.$transaction(async tx => {
+    const updated = await tx.user.update({ where: { id: req.user.id }, data: { name: data.name, phone } });
+    await tx.virtualAccount.updateMany({ where: { userId: updated.id, provider: 'sandbox' }, data: { accountName: `PAYPOINT DEMO / ${updated.name.toUpperCase()}` } });
+    await tx.auditLog.create({ data: { actorId: updated.id, action: 'PROFILE_UPDATED', entityType: 'User', entityId: updated.id, ipAddress: req.ip } });
+    return updated;
+  });
+  res.json({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt } });
+}));
+router.post('/change-password', resetLimiter, authenticate, asyncRoute(async (req, res) => {
+  const data = changePasswordSchema.parse(req.body);
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!(await verifyPassword(data.currentPassword, user.passwordHash))) throw new ApiError(401, 'INVALID_PASSWORD', 'Your current password is incorrect.');
+  if (await verifyPassword(data.newPassword, user.passwordHash)) throw new ApiError(400, 'PASSWORD_UNCHANGED', 'Choose a new password that is different from your current password.');
+  const passwordHash = await hashPassword(data.newPassword);
+  await prisma.$transaction(async tx => {
+    await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
+    await tx.session.deleteMany({ where: { userId: user.id, id: { not: req.session.id } } });
+    await tx.auditLog.create({ data: { actorId: user.id, action: 'PASSWORD_CHANGED', entityType: 'User', entityId: user.id, ipAddress: req.ip } });
+  });
+  sendPasswordChangedEmail(user).catch(error => console.error('Password change notification failed:', error));
+  res.status(204).end();
+}));
 module.exports = { authRouter: router };
