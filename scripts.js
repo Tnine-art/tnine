@@ -3,6 +3,7 @@
   const byId = id => document.getElementById(id);
   const money = kobo => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(kobo / 100);
   let plans = [];
+  let tvPlans = [];
 
   async function api(path, options = {}) {
     const response = await fetch(`/api${path}`, {
@@ -134,7 +135,7 @@
         el.textContent = environment.liveMode ? 'LIVE SERVICE' : (el.textContent.includes('NO CHARGE') ? 'SANDBOX — NO CHARGE' : 'SANDBOX MODE');
         el.classList.toggle('live', environment.liveMode);
       });
-      plans = catalog.plans; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans();
+      plans = catalog.plans; tvPlans = catalog.tvPlans || []; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans();
     } catch (error) {
       if (error.status === 401) return window.location.replace('login.html');
       toast(error.message, 'error');
@@ -146,6 +147,8 @@
     byId('fundForm').addEventListener('submit', fundWallet);
     byId('airtimeForm').addEventListener('submit', buyAirtime);
     byId('dataForm').addEventListener('submit', buyData);
+    byId('transferForm').addEventListener('submit', sendMoney);
+    byId('tvForm').addEventListener('submit', buyTv);
     byId('logoutButton').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST' }); } finally { window.location.href = 'index.html'; } });
   }
   function renderUser(user) {
@@ -158,7 +161,7 @@
     document.querySelectorAll('[data-balance]').forEach(el => { el.textContent = money(balanceKobo); });
     const list = byId('transactionList');
     if (!transactions.length) { list.innerHTML = '<div class="empty-state"><span>↗</span><h3>No transactions yet</h3><p>Your purchases and wallet funding will appear here.</p></div>'; return; }
-    const kind = { WALLET_FUNDING: ['wallet', '+'], AIRTIME: ['mtn', 'A'], DATA: ['glo', 'D'], REFUND: ['wallet', '↩'], ADJUSTMENT: ['wallet', '±'] };
+    const kind = { WALLET_FUNDING: ['wallet', '+'], AIRTIME: ['mtn', 'A'], DATA: ['glo', 'D'], TRANSFER: ['wallet', '⇄'], TV: ['airtel', 'TV'], REFUND: ['wallet', '↩'], ADJUSTMENT: ['wallet', '±'] };
     list.innerHTML = transactions.map(tx => {
       const style = kind[tx.type] || ['wallet', '•'], positive = tx.amountKobo > 0;
       return `<div class="transaction-row"><span class="tx-icon ${style[0]}">${style[1]}</span><div><strong>${escapeHtml(tx.description)}</strong><small>${new Date(tx.createdAt).toLocaleString('en-NG')}</small></div><strong class="tx-amount ${positive ? 'credit' : ''}">${positive ? '+' : '−'}${money(Math.abs(tx.amountKobo))}</strong><span class="tx-status">${escapeHtml(tx.status)}</span></div>`;
@@ -169,6 +172,8 @@
   function renderPlans() {
     const select = byId('dataForm').elements.plan;
     select.innerHTML = '<option value="">Choose a plan</option>' + plans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.network)} ${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
+    const tvSelect = byId('tvForm')?.elements.plan;
+    if (tvSelect) tvSelect.innerHTML = '<option value="">Choose a TV package</option>' + tvPlans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
   }
   function showPanel(name) {
     document.querySelectorAll('.service-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.panel === name));
@@ -198,6 +203,25 @@
     loading(button, true, 'Processing purchase…');
     try { await api('/services/data', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ planCode: plan.code, phone }) }); form.reset(); toast('Data delivered successfully.'); await refreshWallet(); }
     catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
+  }
+  async function sendMoney(event) {
+    event.preventDefault(); const form = event.currentTarget, data = new FormData(form), recipientEmail = String(data.get('recipientEmail')).trim(), amountKobo = Math.round(Number(data.get('amount')) * 100), note = String(data.get('note')).trim(), button = form.querySelector('[type="submit"]');
+    if (!(await confirmAction(`Send ${money(amountKobo)} to ${recipientEmail}?`, 'Confirm transfer'))) return;
+    loading(button, true, 'Sending money…');
+    try {
+      const result = await api('/wallet/transfers', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ recipientEmail, amountKobo, note }) });
+      form.reset(); toast(`Money sent successfully to ${result.transfer.recipient.name}.`); await refreshWallet();
+    } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
+  }
+  async function buyTv(event) {
+    event.preventDefault(); const form = event.currentTarget, data = new FormData(form), plan = tvPlans.find(item => item.code === data.get('plan')), smartcardNumber = String(data.get('smartcardNumber')).trim(), phone = String(data.get('phone')).replace(/\s/g, ''), button = form.querySelector('[type="submit"]');
+    if (!plan) return toast('Choose a valid TV package.', 'error');
+    if (!(await confirmAction(`Pay ${money(plan.amountKobo)} for ${plan.name} on ${smartcardNumber}?`, 'Confirm subscription'))) return;
+    loading(button, true, 'Processing subscription…');
+    try {
+      await api('/services/tv', { method: 'POST', headers: { 'Idempotency-Key': requestKey() }, body: JSON.stringify({ planCode: plan.code, smartcardNumber, phone }) });
+      form.reset(); toast('TV subscription completed successfully.'); await refreshWallet();
+    } catch (error) { toast(error.message, 'error'); } finally { loading(button, false); }
   }
 
   setupLanding(); setupLoginPage(); setupRegisterPage(); setupDashboard(); setupResetPassword();

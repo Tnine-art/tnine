@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Manage your PayPoint wallet, airtime and data purchases.">
+  <meta name="description" content="Manage your PayPoint wallet, transfers, airtime, data and TV subscriptions.">
   <meta name="theme-color" content="#0757e6">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230757e6'/%3E%3Cpath d='M20 48V16h15c9 0 14 5 14 13s-5 13-14 13h-6v6zm9-14h6c3 0 5-2 5-5s-2-5-5-5h-6z' fill='white'/%3E%3C/svg%3E">
   <title>Dashboard — PayPoint</title>
@@ -16,6 +16,8 @@
       <a class="active" href="#overview"><span>⌂</span> Overview</a>
       <button data-service="airtime"><span>↗</span> Buy airtime</button>
       <button data-service="data"><span>⌁</span> Buy data</button>
+      <button data-service="transfer"><span>⇄</span> Send money</button>
+      <button data-service="tv"><span>▣</span> TV subscriptions</button>
       <button data-service="fund"><span>＋</span> Fund wallet</button>
       <a href="#transactions"><span>▤</span> Transactions</a>
     </nav>
@@ -23,7 +25,7 @@
     <button class="logout" id="logoutButton" type="button">↪ Log out</button>
   </aside>
   <nav class="mobile-dashboard-nav" aria-label="Dashboard navigation">
-    <a href="#overview"><span>⌂</span>Home</a><button type="button" data-service="airtime"><span>↗</span>Airtime</button><button type="button" data-service="data"><span>⌁</span>Data</button><button type="button" data-service="fund"><span>＋</span>Wallet</button><a href="#transactions"><span>▤</span>History</a>
+    <a href="#overview"><span>⌂</span>Home</a><button type="button" data-service="transfer"><span>⇄</span>Send</button><button type="button" data-service="airtime"><span>↗</span>Airtime</button><button type="button" data-service="tv"><span>▣</span>TV</button><a href="#transactions"><span>▤</span>History</a>
   </nav>
 
   <main class="dashboard-main">
@@ -48,6 +50,8 @@
       <div class="action-grid">
         <button type="button" data-service="airtime"><span class="action-icon purple">↗</span><div><strong>Buy airtime</strong><small>Recharge any number</small></div><b>›</b></button>
         <button type="button" data-service="data"><span class="action-icon green">⌁</span><div><strong>Buy data</strong><small>Browse affordable plans</small></div><b>›</b></button>
+        <button type="button" data-service="transfer"><span class="action-icon blue">⇄</span><div><strong>Send money</strong><small>Transfer to a PayPoint user</small></div><b>›</b></button>
+        <button type="button" data-service="tv"><span class="action-icon red">▣</span><div><strong>TV subscription</strong><small>DStv, GOtv and StarTimes</small></div><b>›</b></button>
         <button type="button" data-service="fund"><span class="action-icon orange">＋</span><div><strong>Fund wallet</strong><small>Add demo funds</small></div><b>›</b></button>
       </div>
     </section>
@@ -68,6 +72,24 @@
           <label>Data plan<select name="plan" required><option value="">Loading plans…</option></select></label>
           <label>Phone number<input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required></label>
           <button class="btn btn-primary" type="submit">Purchase data →</button>
+        </form>
+      </article>
+      <article class="service-panel" data-panel="transfer">
+        <div class="panel-heading"><div><span class="feature-icon blue">⇄</span><div><h2>Send money</h2><p>Transfer securely to another PayPoint wallet.</p></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
+        <form class="purchase-form transfer-form" id="transferForm">
+          <label>Recipient email<input name="recipientEmail" type="email" autocomplete="off" placeholder="recipient@example.com" required></label>
+          <label>Amount (₦)<input name="amount" type="number" min="100" max="1000000" step="100" placeholder="5,000" required></label>
+          <label>Note (optional)<input name="note" maxlength="80" placeholder="What is this for?"></label>
+          <button class="btn btn-primary" type="submit">Continue →</button>
+        </form>
+      </article>
+      <article class="service-panel" data-panel="tv">
+        <div class="panel-heading"><div><span class="feature-icon red">▣</span><div><h2>TV subscription</h2><p>Renew DStv, GOtv or StarTimes packages.</p></div></div><span class="demo-pill" data-environment-label>SANDBOX MODE</span></div>
+        <form class="purchase-form tv-form" id="tvForm">
+          <label>TV package<select name="plan" required><option value="">Loading packages…</option></select></label>
+          <label>Smartcard / IUC number<input name="smartcardNumber" inputmode="numeric" minlength="6" maxlength="15" placeholder="Enter decoder number" required></label>
+          <label>Contact phone<input name="phone" inputmode="numeric" maxlength="11" placeholder="0801 234 5678" required></label>
+          <button class="btn btn-primary" type="submit">Pay subscription →</button>
         </form>
       </article>
       <article class="service-panel" data-panel="fund">

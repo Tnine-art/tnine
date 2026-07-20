@@ -23,6 +23,8 @@ enum TransactionType {
   WALLET_FUNDING
   AIRTIME
   DATA
+  TRANSFER
+  TV
   REFUND
   ADJUSTMENT
 }

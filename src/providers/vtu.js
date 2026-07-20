@@ -7,10 +7,10 @@ class MockVtuProvider {
 }
 
 class VtpassProvider {
-  async purchase({ reference, network, phone, amountKobo, planCode, kind }) {
+  async purchase({ reference, network, phone, amountKobo, planCode, kind, customerPhone }) {
     const serviceID = kind === 'DATA' ? network.toLowerCase() + '-data' : network.toLowerCase();
-    const payload = { request_id: reference, serviceID, billersCode: phone, phone };
-    if (kind === 'DATA') payload.variation_code = planCode;
+    const payload = { request_id: reference, serviceID, billersCode: phone, phone: customerPhone || phone };
+    if (kind === 'DATA' || kind === 'TV') payload.variation_code = planCode;
     else payload.amount = amountKobo / 100;
     const response = await fetch(`${config.vtpassBaseUrl}/pay`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'api-key': config.vtpassApiKey, 'public-key': config.vtpassPublicKey }, body: JSON.stringify(payload)

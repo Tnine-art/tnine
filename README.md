@@ -1,6 +1,6 @@
 # PayPoint
 
-PayPoint is a full-stack airtime and data platform with a responsive customer experience, secure Express API, PostgreSQL ledger, payment and VTU provider adapters, a restricted operations dashboard, and a pending-order reconciliation worker.
+PayPoint is a full-stack digital payments platform for wallet transfers, airtime, data, and TV subscriptions, with a responsive customer experience, secure Express API, PostgreSQL ledger, payment and VTU provider adapters, a restricted operations dashboard, and a pending-order reconciliation worker.
 
 ## Current operating state
 
