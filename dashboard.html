@@ -39,7 +39,7 @@
         <div><small>Available balance</small><h2 data-balance>₦25,000.00</h2></div>
         <button class="btn wallet-button" type="button" data-service="fund">＋ Fund wallet</button>
         <span class="card-orb orb-one"></span><span class="card-orb orb-two"></span>
-        <footer><span>PAYPOINT WALLET</span><span>•••• 2841</span></footer>
+        <footer><span>PAYPOINT WALLET</span><span>SECURE NGN WALLET</span></footer>
       </article>
       <article class="summary-card"><span class="summary-icon purple">↗</span><div><small>Airtime purchases</small><strong>Instant</strong><p>All Nigerian networks</p></div></article>
       <article class="summary-card"><span class="summary-icon green">⌁</span><div><small>Data bundles</small><strong>From ₦500</strong><p>Flexible monthly plans</p></div></article>
@@ -94,10 +94,22 @@
       </article>
       <article class="service-panel" data-panel="fund">
         <div class="panel-heading"><div><span class="feature-icon orange">＋</span><div><h2>Fund wallet</h2><p>Add funds through the configured payment provider.</p></div></div><span class="demo-pill" data-environment-label>SANDBOX — NO CHARGE</span></div>
-        <form class="purchase-form compact-form" id="fundForm">
-          <label>Amount (₦)<input name="amount" type="number" min="100" max="1000000" step="100" placeholder="10,000" required></label>
-          <button class="btn btn-primary" type="submit">Add demo funds →</button>
-        </form>
+        <div class="funding-grid">
+          <section class="virtual-account-card" aria-labelledby="virtualAccountTitle">
+            <div class="virtual-account-heading"><div><span class="bank-icon">▦</span><div><small data-virtual-environment>DEMO VIRTUAL ACCOUNT</small><h3 id="virtualAccountTitle">Bank transfer details</h3></div></div><span class="account-status"><i></i> Active</span></div>
+            <div class="account-number-row"><div><small>Account number</small><strong data-virtual-account-number>Preparing…</strong></div><button type="button" id="copyVirtualAccount" aria-label="Copy virtual account number" disabled>Copy</button></div>
+            <dl><div><dt>Bank</dt><dd data-virtual-bank>—</dd></div><div><dt>Account name</dt><dd data-virtual-account-name>—</dd></div></dl>
+            <p class="sandbox-account-warning" data-virtual-warning>This is a sandbox account number. Do not transfer real money to it.</p>
+          </section>
+          <section class="funding-checkout-card">
+            <span class="funding-kicker">QUICK FUNDING</span><h3>Add money to your wallet</h3><p>Choose an amount and continue through the secure payment flow.</p>
+            <form class="purchase-form compact-form" id="fundForm">
+              <label>Amount (₦)<input name="amount" type="number" min="100" max="1000000" step="100" placeholder="10,000" required></label>
+              <button class="btn btn-primary" type="submit">Add demo funds →</button>
+            </form>
+            <small class="funding-security">◆ Payment confirmation is verified by the server.</small>
+          </section>
+        </div>
       </article>
     </section>
 

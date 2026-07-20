@@ -136,6 +136,11 @@
         el.classList.toggle('live', environment.liveMode);
       });
       plans = catalog.plans; tvPlans = catalog.tvPlans || []; renderUser(user); renderWallet(wallet.balanceKobo, historyResponse.transactions); renderPlans();
+      loadVirtualAccount(environment).catch(error => {
+        const number = document.querySelector('[data-virtual-account-number]');
+        if (number) number.textContent = 'Unavailable';
+        toast(error.message, 'error');
+      });
     } catch (error) {
       if (error.status === 401) return window.location.replace('login.html');
       toast(error.message, 'error');
@@ -174,6 +179,26 @@
     select.innerHTML = '<option value="">Choose a plan</option>' + plans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.network)} ${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
     const tvSelect = byId('tvForm')?.elements.plan;
     if (tvSelect) tvSelect.innerHTML = '<option value="">Choose a TV package</option>' + tvPlans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
+  }
+  async function loadVirtualAccount(environment) {
+    const { virtualAccount } = await api('/wallet/virtual-account');
+    const number = document.querySelector('[data-virtual-account-number]'), copyButton = byId('copyVirtualAccount');
+    document.querySelector('[data-virtual-bank]').textContent = virtualAccount.bankName;
+    document.querySelector('[data-virtual-account-name]').textContent = virtualAccount.accountName;
+    number.textContent = virtualAccount.accountNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+    copyButton.disabled = false;
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(virtualAccount.accountNumber);
+        copyButton.textContent = 'Copied'; toast('Virtual account number copied.');
+        setTimeout(() => { copyButton.textContent = 'Copy'; }, 1800);
+      } catch (_error) { toast('Could not copy automatically. Select the account number instead.', 'error'); }
+    });
+    if (environment.liveMode && virtualAccount.canReceiveRealMoney) {
+      document.querySelector('[data-virtual-environment]').textContent = 'PAYPOINT VIRTUAL ACCOUNT';
+      document.querySelector('[data-virtual-warning]').textContent = 'Transfers to this account are credited after provider confirmation.';
+      document.querySelector('[data-virtual-warning]').classList.add('live');
+    }
   }
   function showPanel(name) {
     document.querySelectorAll('.service-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.panel === name));

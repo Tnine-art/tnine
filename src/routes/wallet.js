@@ -1,6 +1,8 @@
 const express = require('express');
+const crypto = require('node:crypto');
 const { z } = require('zod');
 const { prisma } = require('../db');
+const { config } = require('../config');
 const { authenticate } = require('../middleware/auth');
 const { ApiError, asyncRoute } = require('../lib/http');
 const { idempotentReference } = require('../lib/idempotency');
@@ -11,6 +13,34 @@ router.use(authenticate);
 router.get('/', asyncRoute(async (req, res) => {
   const account = await prisma.ledgerAccount.findUnique({ where: { userId: req.user.id } });
   res.json({ balanceKobo: account.balanceKobo, currency: 'NGN' });
+}));
+router.get('/virtual-account', asyncRoute(async (req, res) => {
+  let account = await prisma.virtualAccount.findUnique({ where: { userId: req.user.id } });
+  if (!account) {
+    if (config.liveMode) throw new ApiError(503, 'VIRTUAL_ACCOUNT_UNAVAILABLE', 'Virtual account setup is not yet available for this account.');
+    for (let attempt = 0; attempt < 5 && !account; attempt += 1) {
+      const accountNumber = `90${crypto.randomInt(0, 100000000).toString().padStart(8, '0')}`;
+      try {
+        account = await prisma.virtualAccount.create({
+          data: {
+            userId: req.user.id, provider: 'sandbox', bankName: 'PayPoint Demo Bank',
+            accountName: `PAYPOINT DEMO / ${req.user.name.toUpperCase()}`, accountNumber
+          }
+        });
+      } catch (error) {
+        if (error.code !== 'P2002') throw error;
+        account = await prisma.virtualAccount.findUnique({ where: { userId: req.user.id } });
+      }
+    }
+    if (!account) throw new ApiError(503, 'VIRTUAL_ACCOUNT_UNAVAILABLE', 'Could not prepare a demo virtual account. Please try again.');
+  }
+  res.json({
+    virtualAccount: {
+      bankName: account.bankName, accountName: account.accountName, accountNumber: account.accountNumber,
+      currency: account.currency, active: account.active, environment: config.liveMode ? 'live' : 'sandbox',
+      canReceiveRealMoney: config.liveMode && account.provider !== 'sandbox'
+    }
+  });
 }));
 router.get('/transactions', asyncRoute(async (req, res) => {
   const account = await prisma.ledgerAccount.findUnique({ where: { userId: req.user.id } });

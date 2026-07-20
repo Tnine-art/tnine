@@ -90,6 +90,8 @@ Set the Paystack webhook to:
 
 The backend initializes payments, verifies webhook signatures, matches reference/status/amount, and credits the wallet idempotently. Secret keys must be stored only in the deployment secret manager.
 
+The funding dashboard also exposes a unique persisted virtual account in sandbox mode. Sandbox account numbers are clearly marked and cannot receive real bank transfers. Real dedicated virtual accounts must be provisioned through an approved live provider flow with customer consent and any required identity validation; the application deliberately does not fabricate live account details.
+
 ## VTpass
 
 The adapter supports purchase and transaction requery. Before activation:
