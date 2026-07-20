@@ -6,3 +6,6 @@ prisma/*.db-journal
 *.log
 coverage/
 .DS_Store
+
+.vercel
+.env*

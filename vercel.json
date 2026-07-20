@@ -4,7 +4,16 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api"
+      "destination": {
+        "type": "service",
+        "service": "tnine-paypoint-demo"
+      }
     }
-  ]
+  ],
+  "services": {
+    "tnine-paypoint-demo": {
+      "root": ".",
+      "buildCommand": "npm ci && npm run db:generate"
+    }
+  }
 }
