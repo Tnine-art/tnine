@@ -12,7 +12,7 @@ const router = express.Router();
 const phone = z.string().regex(/^0[789][01]\d{8}$/, 'Enter a valid Nigerian phone number.');
 const airtimeSchema = z.object({ network: z.enum(['MTN', 'Airtel', 'Glo', '9mobile']), phone, amountKobo: z.int().min(5000).max(10000000) });
 const dataSchema = z.object({ planCode: z.string(), phone });
-const tvSchema = z.object({ planCode: z.string(), smartcardNumber: z.string().trim().regex(/^\d{6,15}$/, 'Enter a valid smartcard or IUC number.'), phone });
+const tvSchema = z.object({ planCode: z.string(), smartcardNumber: z.string().trim().regex(/^\d{6,15}$/, 'Enter a valid account, smartcard or IUC number.'), phone });
 
 router.get('/plans', asyncRoute(async (_req, res) => res.json(await getServiceCatalog())));
 router.use(authenticate);
@@ -61,6 +61,9 @@ router.post('/data', asyncRoute(async (req, res) => {
 router.post('/tv', asyncRoute(async (req, res) => {
   const data = tvSchema.parse(req.body), catalog = await getServiceCatalog(), plan = catalog.tvPlans.find(item => item.code === data.planCode);
   if (!plan) throw new ApiError(400, 'INVALID_TV_PLAN', 'Select a valid TV subscription package.');
+  if (plan.customerReferenceType === 'phone' && !phone.safeParse(data.smartcardNumber).success) {
+    throw new ApiError(400, 'INVALID_TV_ACCOUNT', 'Enter the Nigerian phone number linked to this TV service.');
+  }
   return makePurchase(req, res, {
     kind: 'TV', network: plan.provider, serviceId: plan.serviceId, phone: data.smartcardNumber, planCode: plan.variationCode, amountKobo: plan.amountKobo,
     description: `${plan.name} subscription for ${data.smartcardNumber}`, customerPhone: data.phone

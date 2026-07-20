@@ -232,7 +232,13 @@
     const select = byId('dataForm').elements.plan;
     select.innerHTML = '<option value="">Choose a plan</option>' + plans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.network)} ${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
     const tvSelect = byId('tvForm')?.elements.plan;
-    if (tvSelect) tvSelect.innerHTML = '<option value="">Choose a TV package</option>' + tvPlans.map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('');
+    if (tvSelect) {
+      const providers = [...new Set(tvPlans.map(plan => plan.provider))];
+      tvSelect.innerHTML = '<option value="">Choose a TV service and package</option>' + providers.map(provider =>
+        `<optgroup label="${escapeHtml(provider)}">${tvPlans.filter(plan => plan.provider === provider).map(plan => `<option value="${escapeHtml(plan.code)}">${escapeHtml(plan.name)} — ${money(plan.amountKobo)}</option>`).join('')}</optgroup>`
+      ).join('');
+      tvSelect.addEventListener('change', updateTvAccountField);
+    }
     const providerCatalog = catalog?.source === 'vtpass';
     document.querySelectorAll('[data-catalog-status]').forEach(element => {
       element.textContent = providerCatalog
@@ -240,6 +246,16 @@
         : 'Demo fallback catalog · no real charge';
       element.classList.toggle('live', providerCatalog);
     });
+  }
+  function updateTvAccountField() {
+    const form = byId('tvForm'), plan = tvPlans.find(item => item.code === form.elements.plan.value), isPhone = plan?.customerReferenceType === 'phone';
+    const input = form.elements.smartcardNumber;
+    document.querySelector('[data-tv-account-label]').textContent = isPhone ? `${plan.provider} account phone` : 'Smartcard / IUC number';
+    document.querySelector('[data-tv-account-help]').textContent = isPhone ? 'Enter the Nigerian phone number connected to this subscription.' : 'Use the number printed on your decoder card.';
+    input.placeholder = isPhone ? '0801 234 5678' : 'Enter decoder number';
+    input.minLength = isPhone ? 11 : 6;
+    input.maxLength = isPhone ? 11 : 15;
+    input.value = '';
   }
   async function loadVirtualAccount(environment) {
     const { virtualAccount } = await api('/wallet/virtual-account');

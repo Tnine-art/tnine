@@ -24,4 +24,14 @@ test('provider variations become TV plans and reject malformed prices', () => {
   assert.equal(plans.length, 1);
   assert.equal(plans[0].provider, 'DStv');
   assert.equal(plans[0].amountKobo, 500000);
+  assert.equal(plans[0].customerReferenceType, 'smartcard');
+});
+
+test('Showmax variations request the account phone instead of a smartcard', () => {
+  const [plan] = normalizeVariations(
+    { serviceId: 'showmax', type: 'tv', label: 'Showmax' },
+    { content: { variations: [{ variation_code: 'mobile', name: 'Mobile plan', variation_amount: '1600' }] } }
+  );
+  assert.equal(plan.customerReferenceType, 'phone');
+  assert.equal(plan.provider, 'Showmax');
 });
