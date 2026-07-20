@@ -176,6 +176,8 @@
     byId('changePasswordForm').addEventListener('submit', changePassword);
     byId('themeToggle').addEventListener('click', toggleTheme);
     byId('appearanceToggle').addEventListener('click', toggleTheme);
+    byId('openMobileMore').addEventListener('click', openMobileMore);
+    document.querySelectorAll('[data-close-mobile-more]').forEach(control => control.addEventListener('click', closeMobileMore));
     byId('transactionList').addEventListener('click', event => {
       const button = event.target.closest('[data-view-receipt]');
       if (button) openReceipt(button.dataset.viewReceipt, button);
@@ -183,9 +185,14 @@
     document.querySelectorAll('[data-close-receipt]').forEach(button => button.addEventListener('click', closeReceipt));
     byId('printReceipt').addEventListener('click', () => { document.body.classList.add('printing-receipt'); window.print(); });
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-receipt'));
-    document.addEventListener('keydown', event => { if (event.key === 'Escape' && byId('receiptModal').classList.contains('open')) closeReceipt(); });
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      if (byId('receiptModal').classList.contains('open')) closeReceipt();
+      else if (byId('mobileMoreSheet').classList.contains('open')) closeMobileMore();
+    });
     setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
-    byId('logoutButton').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST' }); } finally { window.location.href = 'index.html'; } });
+    byId('logoutButton').addEventListener('click', logout);
+    byId('mobileLogoutButton').addEventListener('click', logout);
   }
   function renderUser(user) {
     const firstName = user.name.split(' ')[0] || 'there';
@@ -238,10 +245,19 @@
     }
   }
   function showPanel(name) {
+    closeMobileMore();
     document.querySelectorAll('.service-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.panel === name));
     document.querySelectorAll('[data-service]').forEach(button => button.classList.toggle('active', button.dataset.service === name));
     byId('serviceArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+  function openMobileMore() {
+    const sheet = byId('mobileMoreSheet'); sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); byId('openMobileMore').setAttribute('aria-expanded', 'true'); document.body.classList.add('mobile-sheet-open'); sheet.querySelector('[data-close-mobile-more]').focus();
+  }
+  function closeMobileMore() {
+    const sheet = byId('mobileMoreSheet'); if (!sheet) return;
+    sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); byId('openMobileMore')?.setAttribute('aria-expanded', 'false'); document.body.classList.remove('mobile-sheet-open');
+  }
+  async function logout() { try { await api('/auth/logout', { method: 'POST' }); } finally { window.location.href = 'index.html'; } }
   async function fundWallet(event) {
     event.preventDefault(); const form = event.currentTarget, amountKobo = Math.round(Number(new FormData(form).get('amount')) * 100), button = form.querySelector('[type="submit"]');
     if (!(await confirmAction(`Fund your wallet with ${money(amountKobo)}?`, 'Continue to payment'))) return;
