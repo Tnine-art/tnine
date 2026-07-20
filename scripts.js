@@ -7,6 +7,7 @@
   let plans = [];
   let tvPlans = [];
   let walletTransactions = [];
+  let balanceHidden = (() => { try { return localStorage.getItem('paypoint-balance-hidden') === 'true'; } catch (_error) { return false; } })();
 
   function setTheme(theme) {
     document.documentElement.dataset.theme = theme;
@@ -187,6 +188,7 @@
     byId('changePasswordForm').addEventListener('submit', changePassword);
     byId('themeToggle').addEventListener('click', toggleTheme);
     byId('appearanceToggle').addEventListener('click', toggleTheme);
+    byId('balancePrivacyToggle')?.addEventListener('click', toggleBalancePrivacy);
     byId('openMobileMore').addEventListener('click', openMobileMore);
     document.querySelectorAll('[data-close-mobile-more]').forEach(control => control.addEventListener('click', closeMobileMore));
     byId('transactionList').addEventListener('click', event => {
@@ -219,10 +221,29 @@
   }
   function renderWallet(balanceKobo, transactions) {
     document.querySelectorAll('[data-balance]').forEach(el => {
-      el.classList.remove('balance-loading'); el.textContent = money(balanceKobo); el.setAttribute('aria-busy', 'false');
+      el.classList.remove('balance-loading'); el.dataset.formattedBalance = money(balanceKobo); el.setAttribute('aria-busy', 'false');
     });
+    applyBalancePrivacy();
     walletTransactions = transactions;
     renderTransactions();
+  }
+  function applyBalancePrivacy() {
+    document.querySelectorAll('[data-balance]').forEach(element => {
+      element.textContent = balanceHidden ? '₦ ••••••' : (element.dataset.formattedBalance || '₦0.00');
+      element.classList.toggle('balance-hidden', balanceHidden);
+    });
+    const button = byId('balancePrivacyToggle');
+    if (button) {
+      button.classList.toggle('hidden-active', balanceHidden);
+      button.setAttribute('aria-pressed', String(balanceHidden));
+      button.setAttribute('aria-label', balanceHidden ? 'Show available balance' : 'Hide available balance');
+      button.title = balanceHidden ? 'Show balance' : 'Hide balance';
+    }
+  }
+  function toggleBalancePrivacy() {
+    balanceHidden = !balanceHidden;
+    try { localStorage.setItem('paypoint-balance-hidden', String(balanceHidden)); } catch (_error) {}
+    applyBalancePrivacy();
   }
   function renderTransactions() {
     const list = byId('transactionList');
