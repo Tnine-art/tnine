@@ -143,6 +143,7 @@
       });
     } catch (error) {
       if (error.status === 401) return window.location.replace('login.html');
+      document.querySelectorAll('[data-balance]').forEach(el => { el.classList.remove('balance-loading'); el.textContent = 'Unavailable'; el.setAttribute('aria-busy', 'false'); });
       toast(error.message, 'error');
     }
     const params = new URLSearchParams(location.search);
@@ -163,7 +164,9 @@
     document.querySelectorAll('[data-initials]').forEach(el => { el.textContent = user.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase(); });
   }
   function renderWallet(balanceKobo, transactions) {
-    document.querySelectorAll('[data-balance]').forEach(el => { el.textContent = money(balanceKobo); });
+    document.querySelectorAll('[data-balance]').forEach(el => {
+      el.classList.remove('balance-loading'); el.textContent = money(balanceKobo); el.setAttribute('aria-busy', 'false');
+    });
     const list = byId('transactionList');
     if (!transactions.length) { list.innerHTML = '<div class="empty-state"><span>↗</span><h3>No transactions yet</h3><p>Your purchases and wallet funding will appear here.</p></div>'; return; }
     const kind = { WALLET_FUNDING: ['wallet', '+'], AIRTIME: ['mtn', 'A'], DATA: ['glo', 'D'], TRANSFER: ['wallet', '⇄'], TV: ['airtel', 'TV'], REFUND: ['wallet', '↩'], ADJUSTMENT: ['wallet', '±'] };
